@@ -3,7 +3,7 @@ package org.cwi.examine;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.cwi.examine.data.csv.NetworkCSVReader;
+import org.cwi.examine.csv.Reader;
 import org.cwi.examine.model.Network;
 import org.cwi.examine.presentation.main.MainSection;
 
@@ -31,7 +31,7 @@ public class App extends Application {
         primaryStage.setTitle(TITLE);
 
         // Load network from standard path and show main section.
-        final Network network = new NetworkCSVReader(CSV_FILE_PATH).readNetwork();
+        final Network network = new Reader(CSV_FILE_PATH).readNetwork();
         final MainSection mainSection = new MainSection(network);
 
         final Scene scene = new Scene(mainSection.getView());
