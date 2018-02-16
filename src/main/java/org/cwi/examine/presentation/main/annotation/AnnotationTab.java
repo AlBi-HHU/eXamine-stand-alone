@@ -93,7 +93,8 @@ class AnnotationTab extends Tab {
     private TableRow<NetworkAnnotation> createRow(TableView<NetworkAnnotation> tableView) {
 
         final TableRow<NetworkAnnotation> tableRow = new TableRow<>();
-        tableRow.setOnMouseEntered(event -> onHighlightAnnotations.get().accept(asList(tableRow.getItem())));
+        tableRow.setOnMouseEntered(event -> onHighlightAnnotations.get().accept(
+                tableRow.getItem() == null ? emptyList() : asList(tableRow.getItem())));
         tableRow.setOnMouseExited(event -> onHighlightAnnotations.get().accept(emptyList()));
 
         return tableRow;

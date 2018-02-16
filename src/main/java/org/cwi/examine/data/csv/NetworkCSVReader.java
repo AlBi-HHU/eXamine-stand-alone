@@ -35,6 +35,7 @@ public class NetworkCSVReader {
 
     private static final String NODES_POSTFIX = ".nodes";
     private static final String LINKS_POSTFIX = ".links";
+    private static final String MEMBERSHIPS_POSTFIX = ".memberships";
     private static final String ANNOTATIONS_POSTFIX = ".annotations";
 
     private final String filePath;
@@ -59,6 +60,9 @@ public class NetworkCSVReader {
         // Id to id links, for both node <-> node and node <-> annotation.
         final UndirectedGraph<String, DefaultEdge> idGraph = new Pseudograph<>(DefaultEdge.class);
         for (final File file : resolveFiles(LINKS_POSTFIX)) {
+            loadLinks(file, idGraph);
+        }
+        for (final File file : resolveFiles(MEMBERSHIPS_POSTFIX)) {
             loadLinks(file, idGraph);
         }
 
