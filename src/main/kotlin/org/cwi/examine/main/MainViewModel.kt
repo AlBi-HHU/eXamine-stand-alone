@@ -15,9 +15,7 @@ import tornadofx.getProperty
 import tornadofx.property
 import java.util.concurrent.Callable
 
-/**
- * View model of the main section. Maintains exploration state of a network that is being viewed.
- */
+/** View model of the main section. Maintains exploration state of a network that is being viewed. */
 class MainViewModel : Controller() {
 
     val dataSets: ObservableList<DataSet> = unmodifiableObservableList(observableArrayList(
