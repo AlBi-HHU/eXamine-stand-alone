@@ -60,7 +60,7 @@ class Layout(// Network and set topology.
         }
         for (s in sets) {
             for (n in s.nodes) {
-                nodeMemberships[n]!!.add(s)
+                nodeMemberships[n]?.add(s)
             }
         }
 
@@ -172,11 +172,11 @@ class Layout(// Network and set topology.
     fun position(node: NetworkNode?): Point2D {
         val result: Point2D
 
-        if (index == null) {
-            result = Point2D(0.0, 0.0)
+        result = if (index == null) {
+            Point2D(0.0, 0.0)
         } else {
             val i = index!![node]
-            result = if (i == null) Point2D(0.0, 0.0) else Point2D(P!![0][i], P!![1][i])
+            if (i == null) Point2D(0.0, 0.0) else Point2D(P!![0][i], P!![1][i])
         }
 
         return result
@@ -213,20 +213,6 @@ class Layout(// Network and set topology.
 
         return positionMap
     }
-
-    // Position of the given node, (0,0) iff null.
-    //    public Point2D position(RichNode node) {
-    //        Point2D result;
-    //
-    //        if(richIndex == null) {
-    //            result = new Point2D(0, 0);
-    //        } else {
-    //            Integer i = richIndex.get(node);
-    //            result = i == null ? new Point2D(0, 0) : new Point2D(P[0][i], P[1][i]);
-    //        }
-    //
-    //        return result;
-    //    }
 
     private fun initializeSetGraphs() {
         val vN = nodes.size

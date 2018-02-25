@@ -32,7 +32,7 @@
 
     -fx-border-width:       2px;
     -fx-border-color:       -base-intensity-low;
-    -fx-border-radius:      6px;
+    -fx-border-radius:      10em;    /* Very high value to guarantee circle. */
 
     -fx-background-insets:  1px;
     -fx-background-radius:  6px;

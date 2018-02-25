@@ -1,51 +1,142 @@
 package org.cwi.examine.main.annotation
 
+import javafx.beans.binding.Bindings
 import javafx.beans.property.*
-import javafx.collections.FXCollections.*
-import javafx.collections.ListChangeListener
-import javafx.scene.control.TabPane
+import javafx.beans.value.ObservableValue
+import javafx.collections.FXCollections
+import javafx.scene.control.*
+import javafx.scene.layout.BorderPane
+import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 import org.cwi.examine.data.NetworkAnnotation
-import org.cwi.examine.data.NetworkCategory
+import org.cwi.examine.data.NetworkAnnotationCategory
+import org.cwi.examine.main.MainViewModel
+import tornadofx.bind
+import java.util.*
+import java.util.concurrent.Callable
 import java.util.function.Consumer
-import java.util.stream.Collectors.toList
 
-class AnnotationTabs : TabPane() {
+class AnnotationTabs(private val model: MainViewModel) : TabPane() {
 
-    private val categories = SimpleListProperty(observableArrayList<NetworkCategory>())
-    private val annotationColors = SimpleMapProperty(observableHashMap<NetworkAnnotation, Color>())
-    private val highlightedAnnotations = SimpleSetProperty(observableSet<NetworkAnnotation>())
+    init {
+        styleClass.add("annotation-tabs")
+        tabs.bind(model.activeCategories, ::createTab)
+    }
+
+    private fun createTab(category: NetworkAnnotationCategory): AnnotationTab {
+
+        val tab = AnnotationTab(category)
+        tab.annotationColorsProperty().bind(model.annotationColorProperty())
+        tab.highlightedAnnotationsProperty().bind(model.highlightedAnnotations())
+        tab.onToggleAnnotationProperty().set(Consumer { model.toggleAnnotation(it) })
+        tab.onHighlightAnnotationsProperty().set(Consumer { model.highlightAnnotations(it) })
+
+        return tab
+    }
+
+    override fun getUserAgentStylesheet(): String =
+            AnnotationTabs::class.java.getResource("AnnotationTabs.css").toExternalForm()
+
+}
+
+internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
+
+    private val annotationTable: TableView<NetworkAnnotation>
+    private val annotationSelectionModel: AnnotationSelectionModel
+
+    private val annotationColors = SimpleMapProperty(FXCollections.observableHashMap<NetworkAnnotation, Color>())
+
+    private val colorColumn = TableColumn<NetworkAnnotation, Color?>()
+    private val nameColumn = TableColumn<NetworkAnnotation, String>()
+    private val scoreColumn = TableColumn<NetworkAnnotation, Double>("Score")
 
     private val onToggleAnnotation = SimpleObjectProperty<Consumer<NetworkAnnotation>>(Consumer { _ -> })
     private val onHighlightAnnotations = SimpleObjectProperty<Consumer<List<NetworkAnnotation>>>(Consumer { _ -> })
 
     init {
-        styleClass.add("annotation-tabs")
 
-        categories.addListener(ListChangeListener { this.onCategoriesChange(it) })
+        // Tab.
+        isClosable = false
+        text = category.name
+
+        // Table.
+        annotationTable = TableView(FXCollections.observableList(category.annotations))
+
+        val content = BorderPane(annotationTable)
+        content.styleClass.add("annotation-tab")
+        setContent(content)
+
+        nameColumn.text = category.name
+
+        // Cell value factories.
+        colorColumn.setCellValueFactory { bindColorValue(it) }
+        nameColumn.setCellValueFactory { SimpleStringProperty(it.value.name) }
+        scoreColumn.setCellValueFactory { SimpleObjectProperty(it.value.score) }
+
+        // Cell factories.
+
+        // Row and cell factories.
+        annotationTable.setRowFactory(::createRow)
+        colorColumn.setCellFactory(::createColorCell)
+
+        // Column layout and style.
+        colorColumn.styleClass.add("color-column")
+        nameColumn.styleClass.add("name-column")
+        scoreColumn.styleClass.add("score-column")
+
+        annotationTable.columns.setAll(colorColumn, nameColumn, scoreColumn)
+
+        annotationSelectionModel = AnnotationSelectionModel(annotationTable)
+        annotationTable.selectionModel = annotationSelectionModel
+        annotationSelectionModel.onToggleAnnotationProperty().bind(onToggleAnnotation)
+
+        annotationTable.setRowFactory(::createRow)
     }
 
-    private fun onCategoriesChange(change: ListChangeListener.Change<out NetworkCategory>) {
-
-        val tabs = categories.stream()
-                .map<AnnotationTab>({ this.createAndBindTab(it) })
-                .collect(toList())
-        getTabs().setAll(tabs)
+    private fun bindColorValue(parameters: TableColumn.CellDataFeatures<NetworkAnnotation, Color?>): ObservableValue<Color?> {
+        return Bindings.createObjectBinding(Callable { annotationColors[parameters.value] }, annotationColors)
     }
 
-    private fun createAndBindTab(category: NetworkCategory): AnnotationTab {
+    private fun createRow(tableView: TableView<NetworkAnnotation>): TableRow<NetworkAnnotation> {
 
-        val tab = AnnotationTab(category)
-        tab.annotationColorsProperty().bind(annotationColors)
-        tab.highlightedAnnotationsProperty().bind(highlightedAnnotations)
-        tab.onToggleAnnotationProperty().bind(onToggleAnnotation)
-        tab.onHighlightAnnotationsProperty().bind(onHighlightAnnotations)
+        val tableRow = TableRow<NetworkAnnotation>()
+        tableRow.setOnMouseEntered { _ -> onHighlightAnnotations.get().accept(
+                if (tableRow.item == null) Collections.emptyList() else Arrays.asList(tableRow.item)) }
+        tableRow.setOnMouseExited { _ -> onHighlightAnnotations.get().accept(Collections.emptyList()) }
 
-        return tab
+        return tableRow
     }
 
-    fun categoriesProperty(): ListProperty<NetworkCategory> {
-        return categories
+    private fun createColorCell(column: TableColumn<NetworkAnnotation, Color?>): TableCell<NetworkAnnotation, Color?> {
+        return object : TableCell<NetworkAnnotation, Color?>() {
+
+            init {
+                styleClass.add("color-cell")
+            }
+
+            override fun updateItem(optionalColor: Color?, empty: Boolean) {
+
+                val marker: Pane?
+
+                if (empty || optionalColor == null) {
+                    marker = null
+                } else {
+                    marker = Pane()
+                    marker.styleClass.add("marker")
+                    marker.style = "-fx-background-color: " + rgbString(optionalColor)
+                }
+
+                graphic = marker
+            }
+        }
+    }
+
+    private fun rgbString(color: Color): String {
+        return "rgba(" +
+                (255 * color.red).toInt() + "," +
+                (255 * color.green).toInt() + "," +
+                (255 * color.blue).toInt() + "," +
+                color.opacity + ")"
     }
 
     fun annotationColorsProperty(): MapProperty<NetworkAnnotation, Color> {
@@ -53,7 +144,7 @@ class AnnotationTabs : TabPane() {
     }
 
     fun highlightedAnnotationsProperty(): SetProperty<NetworkAnnotation> {
-        return highlightedAnnotations
+        return annotationSelectionModel.highlightedAnnotationsProperty()
     }
 
     fun onToggleAnnotationProperty(): SimpleObjectProperty<Consumer<NetworkAnnotation>> {
@@ -64,7 +155,4 @@ class AnnotationTabs : TabPane() {
         return onHighlightAnnotations
     }
 
-    override fun getUserAgentStylesheet(): String {
-        return AnnotationTabs::class.java.getResource("AnnotationTabs.css").toExternalForm()
-    }
 }

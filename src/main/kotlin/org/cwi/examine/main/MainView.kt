@@ -1,13 +1,20 @@
 package org.cwi.examine.main
 
+import javafx.beans.binding.Bindings.createObjectBinding
+import javafx.geometry.Pos
 import javafx.geometry.Side
+import javafx.scene.control.Label
+import javafx.scene.control.Tab
+import javafx.scene.control.TabPane
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
+import javafx.scene.layout.StackPane
+import org.cwi.examine.data.DataSet
 import org.cwi.examine.main.annotation.AnnotationTabs
 import org.cwi.examine.main.nodelinkcontour.NodeLinkContourView
 import org.cwi.examine.visualization.control.ColorBar
 import tornadofx.*
-import java.util.function.Consumer
+import java.util.concurrent.Callable
 
 /** Primary pane of the application. */
 class MainView : View("eXamine") {
@@ -17,25 +24,21 @@ class MainView : View("eXamine") {
     override val root = BorderPane()
 
     init {
-        root.styleClass.add("main-view")
+        root.stylesheets += javaClass.getResource("MainView.css").toExternalForm()
+        root.styleClass += "main-view"
 
         // Annotation lists at the left.
-        val annotationOverview = AnnotationTabs()
-        annotationOverview.side = Side.RIGHT
-        root.left = annotationOverview
-
-        annotationOverview.categoriesProperty().bindContent(model.categories)
-        annotationOverview.annotationColorsProperty().bind(model.annotationColorProperty())
-        annotationOverview.highlightedAnnotationsProperty().bind(model.highlightedAnnotations())
-        annotationOverview.onToggleAnnotationProperty().set(Consumer { model.toggleAnnotation(it) })
-        annotationOverview.onHighlightAnnotationsProperty().set(Consumer { model.highlightAnnotations(it) })
+        val annotationOverview = AnnotationTabs(model)
+        annotationOverview.side = Side.LEFT
+        root.right = annotationOverview
 
         // Node link contour and controls at the center.
         val nodeLinkContainer = BorderPane()
         nodeLinkContainer.style = "-fx-padding: 0 .5em .5em .5em"
         root.center = nodeLinkContainer
 
-        nodeLinkContainer.center = NodeLinkContourView(model)
+        val selectionTabs = NetworkSelectionTabs(model)
+        nodeLinkContainer.center = selectionTabs
 
         // Information bar at the top.
         val colorBar = ColorBar()
@@ -45,11 +48,55 @@ class MainView : View("eXamine") {
                 padding = box(0.em, 0.5.em, 0.em, 0.em)
             }
         }
+        barLabel.visibleProperty().bind(model.nodeColormap().isNotNull)
 
         val informationBar = BorderPane()
-        informationBar.left = HBox(barLabel, colorBar)
+        val informationBox = HBox(barLabel, colorBar)
+        informationBox.alignment = Pos.CENTER
+        informationBar.center = informationBox
 
         nodeLinkContainer.top = informationBar
+    }
+
+}
+
+private class NetworkSelectionTabs(private val model: MainViewModel) : StackPane() {
+
+    private val contentPlaceholder = Label(
+            "Please place your data sets in the '" +
+                    MainViewModel.DATA_SET_DIRECTORY +
+                    "' directory and try again.")
+    private val tabPane = TabPane()
+    private val loadingLabel = StackPane(Label("Loading network..."))
+
+    init {
+        alignment = Pos.TOP_CENTER
+
+        tabPane.styleClass += "network-tabs"
+        tabPane.side = Side.LEFT
+        tabPane.tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
+
+        tabPane.tabs.bind(model.dataSets, ::createPane)
+
+        tabPane.selectionModel.selectedIndexProperty().addListener { _, _, newIndex ->
+            model.activateDataSet(model.dataSets[newIndex.toInt()])
+        }
+
+        children.addAll(contentPlaceholder, tabPane)
+    }
+
+    private fun createPane(dataSet: DataSet): Tab {
+        val pane = Tab(dataSet.name, loadingLabel)
+
+        pane.contentProperty().bind(createObjectBinding(
+                Callable {
+                    if (model.activeDataSet == dataSet)
+                        NodeLinkContourView(model)
+                    else
+                        loadingLabel
+                }, model.activeNetworkProperty()))
+
+        return pane
     }
 
 }

@@ -1481,14 +1481,14 @@ is being used to size a border should also be in pixels.
     -fx-border-color:   transparent;
 }
 .tab-pane > .tab-header-area > .headers-region > .tab:hover {
-    -fx-border-color: -base-intensity-lowest;
+    -fx-border-color: -base-intensity-low;
 }
 .tab-pane > .tab-header-area > .headers-region > .tab:hover:selected {
     -fx-color: -fx-base;
     -fx-background-color: -fx-background;
 }
 .tab-pane > .tab-header-area > .headers-region > .tab:selected {
-    -fx-border-color: -base-intensity-lowest;
+    -fx-border-color: -base-intensity-low;
 }
 .tab-pane > .tab-header-area > .headers-region > .tab:disabled:hover {
     -fx-color: -fx-base;

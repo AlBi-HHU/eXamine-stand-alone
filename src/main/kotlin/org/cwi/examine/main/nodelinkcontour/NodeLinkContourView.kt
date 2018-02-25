@@ -55,10 +55,12 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         isFitToWidth = true
         content = layerContainer
 
-        model.activeNetworkProperty().addListener({ _, _, network -> onNetworkChange(network) })
-        onNetworkChange(model.activeNetworkProperty().get())
+        model.activeNetworkProperty().addListener { _, oldNetwork, newNetwork ->
+            onNetworkChange(oldNetwork, newNetwork)
+        }
+        onNetworkChange(model.activeNetwork, model.activeNetwork)
 
-        selectedAnnotations.addListener(ListChangeListener { _ -> updateLayout() })
+        selectedAnnotations.addListener(ListChangeListener { _ -> updateLayout(model.activeNetwork, model.activeNetwork) })
         contourLayer.annotationsProperty().bind(selectedAnnotations)
 
         selectedAnnotations.bind(model.selectedAnnotationsProperty())
@@ -68,21 +70,21 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         linkLayer.highlightedElementsProperty().bind(model.highlightedLinks())
     }
 
-    private fun onNetworkChange(network: Network) {
-        updateLayout()
-        linkLayer.elementProperty().setAll(network.graph.edgeSet())
-        nodeLayer.elementProperty().setAll(network.graph.vertexSet())
+    private fun onNetworkChange(oldNetwork: Network?, newNetwork: Network?) {
+        updateLayout(oldNetwork, newNetwork)
+        linkLayer.elementProperty().setAll(newNetwork?.graph?.edgeSet() ?: emptyList())
+        nodeLayer.elementProperty().setAll(newNetwork?.graph?.vertexSet() ?: emptyList())
     }
 
-    private fun updateLayout() {
+    private fun updateLayout(oldNetwork: Network?, newNetwork: Network?) {
 
-        if (model.activeNetworkProperty() == null) {
+        if (newNetwork == null || oldNetwork != newNetwork) {
             layout = null
         } else {
-            layout = Layout(model.activeNetworkProperty().get(), annotationWeights, layout)
+            layout = Layout(newNetwork, annotationWeights, layout)
 
             val newPositions = HashMap<NetworkNode, Point2D>()
-            model.activeNetworkProperty().get().graph.vertexSet().forEach { node -> newPositions[node] = layout!!.position(node) }
+            newNetwork.graph.vertexSet().forEach { node -> newPositions[node] = layout!!.position(node) }
             nodePositions.clear()
             nodePositions.putAll(newPositions)
 

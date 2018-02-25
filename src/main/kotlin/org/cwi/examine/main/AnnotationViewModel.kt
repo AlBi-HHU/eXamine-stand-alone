@@ -7,11 +7,10 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.Color.rgb
 import org.cwi.examine.data.NetworkAnnotation
 import java.util.*
-import java.util.Arrays.asList
 
 internal class AnnotationColors {
 
-    private val availableColors = LinkedList(asList(*PALETTE))
+    private val availableColors = LinkedList(Arrays.asList(*PALETTE))
     private val colorMap = SimpleMapProperty(observableHashMap<NetworkAnnotation, Color>())
 
     /**
@@ -64,7 +63,7 @@ internal class AnnotationColors {
     fun clear() {
         colorMap.clear()
         availableColors.clear()
-        availableColors.addAll(asList(*PALETTE))
+        availableColors.addAll(Arrays.asList(*PALETTE))
     }
 
     /**
@@ -75,8 +74,17 @@ internal class AnnotationColors {
     }
 
     companion object {
-
-        private val PALETTE = arrayOf(rgb(141, 211, 199), rgb(255, 255, 179), rgb(190, 186, 218), rgb(251, 128, 114), rgb(128, 177, 211), rgb(253, 180, 98), rgb(252, 205, 229), rgb(188, 128, 189), rgb(204, 235, 197), rgb(255, 237, 111))
+        private val PALETTE = arrayOf(
+                rgb(141, 211, 199),
+                rgb(255, 255, 179),
+                rgb(190, 186, 218),
+                rgb(251, 128, 114),
+                rgb(128, 177, 211),
+                rgb(253, 180, 98),
+                rgb(252, 205, 229),
+                rgb(188, 128, 189),
+                rgb(204, 235, 197),
+                rgb(255, 237, 111))
     }
 
 }

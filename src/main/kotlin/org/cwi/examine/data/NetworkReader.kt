@@ -13,14 +13,10 @@ import java.io.FileNotFoundException
 import java.io.FileReader
 import java.util.*
 
-/**
- * CSV network loader.
- */
-class NetworkReader(private val filePath: String) {
+/** CSV network loader. */
+class NetworkReader(private val networkDirectory: File) {
 
-    /**
-     * Load network from the csv files that can be found at filePath.
-     */
+    /** Load network from the csv files that can be found at filePath. */
     @Throws(FileNotFoundException::class)
     fun readNetwork(): Network {
 
@@ -58,8 +54,8 @@ class NetworkReader(private val filePath: String) {
         }
 
         // Categories.
-        val categories = ArrayList<NetworkCategory>()
-        categoryToAnnotations.forEach { id, hAnnotations -> categories.add(NetworkCategory(id, hAnnotations)) }
+        val categories = ArrayList<NetworkAnnotationCategory>()
+        categoryToAnnotations.forEach { id, hAnnotations -> categories.add(NetworkAnnotationCategory(id, hAnnotations)) }
 
         return Network(superGraph, categories)
     }
@@ -68,10 +64,10 @@ class NetworkReader(private val filePath: String) {
     private fun loadNodes(file: File, idToNode: MutableMap<String, NetworkNode>) {
 
         val nodeColumns = HashMap<String, String>()
-        nodeColumns.put("Identifier", "identifier")
-        nodeColumns.put("Symbol", "name")
-        nodeColumns.put("URL", "url")
-        nodeColumns.put("Score", "score")
+        nodeColumns["Identifier"] = "identifier"
+        nodeColumns["Symbol"] = "name"
+        nodeColumns["URL"] = "url"
+        nodeColumns["Score"] = "score"
 
         val nodeEntryBeans = csvToBean(file, NodeEntry::class.java, nodeColumns)
 
@@ -108,11 +104,11 @@ class NetworkReader(private val filePath: String) {
                                 categoryToAnnotations: MutableMap<String, MutableList<NetworkAnnotation>>) {
 
         val annotationColumns = HashMap<String, String>()
-        annotationColumns.put("Identifier", "identifier")
-        annotationColumns.put("Symbol", "name")
-        annotationColumns.put("URL", "url")
-        annotationColumns.put("Score", "score")
-        annotationColumns.put("Category", "category")
+        annotationColumns["Identifier"] = "identifier"
+        annotationColumns["Symbol"] = "name"
+        annotationColumns["URL"] = "url"
+        annotationColumns["Score"] = "score"
+        annotationColumns["Category"] = "category"
 
         val annotationEntries = csvToBean(file, AnnotationEntry::class.java, annotationColumns)
 
@@ -144,14 +140,13 @@ class NetworkReader(private val filePath: String) {
     }
 
     private fun <T : NetworkElement> mapIdToElement(elements: List<T>, idToElement: MutableMap<String, T>) {
-        elements.forEach { e -> idToElement.put(e.identifier, e) }
+        elements.forEach { e -> idToElement[e.identifier] = e }
     }
 
     private fun resolveFiles(postFix: String): List<File> {
 
-        val dataRoot = File(filePath)
-        val files = dataRoot.listFiles { file -> file.name.endsWith(postFix) }
-        return Arrays.asList(*files!!)
+        val files = networkDirectory.listFiles { file -> file.name.endsWith(postFix) }
+        return files?.let { Arrays.asList(*it) } ?: emptyList()
     }
 
     @Throws(FileNotFoundException::class)

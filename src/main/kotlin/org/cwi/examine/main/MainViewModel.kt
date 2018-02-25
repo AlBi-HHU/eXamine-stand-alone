@@ -1,6 +1,7 @@
 package org.cwi.examine.main
 
 import javafx.beans.binding.Bindings
+import javafx.beans.binding.Bindings.createObjectBinding
 import javafx.beans.property.*
 import javafx.collections.FXCollections.*
 import javafx.collections.ObservableList
@@ -10,6 +11,8 @@ import org.cwi.examine.visualization.color.BlueWhiteRed
 import org.cwi.examine.visualization.color.ColormapInterval
 import org.jgrapht.graph.DefaultEdge
 import tornadofx.Controller
+import tornadofx.getProperty
+import tornadofx.property
 import java.util.concurrent.Callable
 
 /**
@@ -17,9 +20,17 @@ import java.util.concurrent.Callable
  */
 class MainViewModel : Controller() {
 
-    private val activeNetwork = SimpleObjectProperty(Network())
+    val dataSets: ObservableList<DataSet> = unmodifiableObservableList(observableArrayList(
+            listDataSets(DATA_SET_DIRECTORY)
+    ))
 
-    val categories: ObservableList<NetworkCategory> = observableArrayList<NetworkCategory>()
+    var activeDataSet: DataSet? by property()
+        private set
+
+    var activeNetwork: Network? by property(Network())
+        private set
+
+    val activeCategories: ObservableList<NetworkAnnotationCategory> = observableArrayList()
 
     private val selectedAnnotations = SimpleListProperty(observableArrayList<NetworkAnnotation>())
     private val annotationWeights = SimpleMapProperty(observableHashMap<NetworkAnnotation, Double>())
@@ -32,39 +43,37 @@ class MainViewModel : Controller() {
     private val nodeColormap: ObjectProperty<ColormapInterval?> = SimpleObjectProperty(null)
 
     init {
+        // Induce active network from active data set.
+        getProperty(MainViewModel::activeNetwork).bind(createObjectBinding(
+                Callable { activeDataSet?.let { it.network.induce(it.network.modules) } },
+                activeDataSetProperty()
+        ))
+
+        // Derive colormap for node scores.
         nodeColormap.bind(Bindings.createObjectBinding(Callable {
-            val scoreExtrema = activeNetwork.get().nodeScoreExtrema
+            val scoreExtrema = activeNetwork?.nodeScoreExtrema
             val symmetricScoreExtrema = scoreExtrema?.expandToCenter(0.0)
             symmetricScoreExtrema?.let { ColormapInterval(BlueWhiteRed, it) }
-        }, activeNetwork))
+        }, activeNetworkProperty()))
 
-        val superNetwork = NetworkReader(CSV_FILE_PATH).readNetwork()
-        val moduleNetwork = superNetwork.induce(superNetwork.modules)
-        activateNetwork(moduleNetwork)
+        if (!dataSets.isEmpty()) activateDataSet(dataSets[0])
     }
 
-    // -- Actions.
-
-    /**
-     * Activate the given network as being explored. This clears the entire exploration state.
-     *
-     * @param network The network to activate as being explored.
-     */
-    fun activateNetwork(network: Network) {
+    /** Set the data set that is being worked on. */
+    fun activateDataSet(dataSetToActivate: DataSet) {
+        // Clear all selections, such that transition to new network is consistent.
         selectedAnnotations.clear()
         annotationWeights.clear()
         annotationColors.clear()
+        activeCategories.clear()
         clearHighlights()
 
-        activeNetwork.set(network)
-        categories.setAll(network.categories)
+        activeDataSet = dataSetToActivate
+
+        activeCategories.setAll(activeNetwork?.categories ?: emptyList())
     }
 
-    /**
-     * Toggle the selected state of the given annotation.
-     *
-     * @param annotation The annotation to toggle the selected state for.
-     */
+    /** Toggle the selected state of the given annotation. */
     fun toggleAnnotation(annotation: NetworkAnnotation) {
 
         if (selectedAnnotations.contains(annotation)) {
@@ -78,12 +87,7 @@ class MainViewModel : Controller() {
         }
     }
 
-    /**
-     * Adjust the weight (importance) of the given annotation by the given weight change.
-     *
-     * @param annotation   The annotation to change the weight of.
-     * @param weightChange The number by which to change the weight.
-     */
+    /** Adjust the weight (importance) of the given annotation by the given weight change. */
     fun changeAnnotationWeight(annotation: NetworkAnnotation, weightChange: Double) {
         val currentWeight = annotationWeightsProperty()[annotation] ?: 1.0
         val newWeight = Math.max(1.0, currentWeight + weightChange)
@@ -93,8 +97,6 @@ class MainViewModel : Controller() {
     /**
      * Highlight the given annotations, which also highlights the nodes and links
      * that are fully contained by individual annotations.
-     *
-     * @param annotations The annotation to highlight.
      */
     fun highlightAnnotations(annotations: List<NetworkAnnotation>) {
         clearHighlights()
@@ -113,31 +115,35 @@ class MainViewModel : Controller() {
     }
 
     fun highlightLink(edges: List<DefaultEdge>) {
-        var graph = activeNetwork.get().graph
-
         clearHighlights()
-        for (edge in edges) {
-            highlightedNodes.add(graph.getEdgeSource(edge))
-            highlightedNodes.add(graph.getEdgeTarget(edge))
-            highlightedLinks.add(edge)
+
+        activeNetwork?.graph?.let { graph ->
+            for (edge in edges) {
+                highlightedNodes.add(graph.getEdgeSource(edge))
+                highlightedNodes.add(graph.getEdgeTarget(edge))
+                highlightedLinks.add(edge)
+            }
         }
+
         induceHighlightedAnnotations()
     }
 
     private fun induceHighlightedLinks() {
-        val graph = activeNetwork.get().graph
-        highlightedLinks.addAll(graph.edgeSet()
-                .filter { edge ->
-                    highlightedNodes.contains(graph.getEdgeSource(edge)) &&
-                            highlightedNodes.contains(graph.getEdgeTarget(edge))
-                }.toSet())
+        activeNetwork?.graph?.let { graph ->
+            val linksToHighlight = graph.edgeSet()?.filter { edge ->
+                highlightedNodes.contains(graph.getEdgeSource(edge)) &&
+                        highlightedNodes.contains(graph.getEdgeTarget(edge))
+            } ?: emptyList()
+            highlightedLinks.addAll(linksToHighlight)
+        }
     }
 
     private fun induceHighlightedAnnotations() {
-        val network = activeNetwork.get()
-
         if (highlightedNodes.get().isNotEmpty()) {
-            highlightedAnnotations.addAll(network.annotations.filter { it.nodes.containsAll(highlightedNodes.get()) }.toSet())
+            val annotationsToHighlight = activeNetwork?.annotations?.values
+                    ?.filter { it.nodes.containsAll(highlightedNodes.get()) }
+                    ?: emptyList()
+            highlightedAnnotations.addAll(annotationsToHighlight)
         }
     }
 
@@ -148,43 +154,27 @@ class MainViewModel : Controller() {
         highlightedAnnotations.clear()
     }
 
-    // -- Accessors.
+    fun activeDataSetProperty(): ReadOnlyObjectProperty<DataSet?> = getProperty(MainViewModel::activeDataSet)
 
-    fun activeNetworkProperty(): ReadOnlyObjectProperty<Network> {
-        return activeNetwork
-    }
+    fun activeNetworkProperty(): ReadOnlyObjectProperty<Network?> = getProperty(MainViewModel::activeNetwork)
 
-    fun annotationWeightsProperty(): ReadOnlyMapProperty<NetworkAnnotation, Double> {
-        return annotationWeights
-    }
+    fun annotationWeightsProperty(): ReadOnlyMapProperty<NetworkAnnotation, Double> = annotationWeights
 
-    fun selectedAnnotationsProperty(): ReadOnlyListProperty<NetworkAnnotation> {
-        return selectedAnnotations
-    }
+    fun selectedAnnotationsProperty(): ReadOnlyListProperty<NetworkAnnotation> = selectedAnnotations
 
-    fun annotationColorProperty(): ReadOnlyMapProperty<NetworkAnnotation, Color> {
-        return annotationColors.colorMapProperty()
-    }
+    fun annotationColorProperty(): ReadOnlyMapProperty<NetworkAnnotation, Color> = annotationColors.colorMapProperty()
 
-    fun highlightedNodes(): ReadOnlySetProperty<NetworkNode> {
-        return highlightedNodes
-    }
+    fun highlightedNodes(): ReadOnlySetProperty<NetworkNode> = highlightedNodes
 
-    fun highlightedLinks(): ReadOnlySetProperty<DefaultEdge> {
-        return highlightedLinks
-    }
+    fun highlightedLinks(): ReadOnlySetProperty<DefaultEdge> = highlightedLinks
 
-    fun highlightedAnnotations(): ReadOnlySetProperty<NetworkAnnotation> {
-        return highlightedAnnotations
-    }
+    fun highlightedAnnotations(): ReadOnlySetProperty<NetworkAnnotation> = highlightedAnnotations
 
-    fun nodeColormap(): ReadOnlyObjectProperty<ColormapInterval?> {
-        return nodeColormap
-    }
+    fun nodeColormap(): ReadOnlyObjectProperty<ColormapInterval?> = nodeColormap
 
     companion object {
-        private const val CSV_FILE_PATH = "data/"
-        private const val DEFAULT_ANNOTATION_WEIGHT = 1.0
+        const val DATA_SET_DIRECTORY = "data-sets"
+        const val DEFAULT_ANNOTATION_WEIGHT = 1.0
     }
 
 }
