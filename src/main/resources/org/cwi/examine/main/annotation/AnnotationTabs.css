@@ -20,6 +20,10 @@
     -fx-cursor: hand;
 }
 
+.color-column {
+    -fx-pref-width: 2.5em;
+}
+
 .color-cell {
     -fx-alignment:  center;
 }

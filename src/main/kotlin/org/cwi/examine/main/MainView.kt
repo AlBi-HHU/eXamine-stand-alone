@@ -1,6 +1,7 @@
 package org.cwi.examine.main
 
 import javafx.beans.binding.Bindings.createObjectBinding
+import javafx.beans.binding.Bindings.isEmpty
 import javafx.geometry.Pos
 import javafx.geometry.Side
 import javafx.scene.control.Label
@@ -17,7 +18,7 @@ import tornadofx.*
 import java.util.concurrent.Callable
 
 /** Primary pane of the application. */
-class MainView : View("eXamine") {
+class MainView : View() {
 
     private val model: MainViewModel by inject()
 
@@ -26,6 +27,10 @@ class MainView : View("eXamine") {
     init {
         root.stylesheets += javaClass.getResource("MainView.css").toExternalForm()
         root.styleClass += "main-view"
+
+        titleProperty.bind(model.activeDataSetProperty().stringBinding {
+            "eXamine" + (it?.name?.let { name -> " - " + name } ?: "")
+        })
 
         // Annotation lists at the left.
         val annotationOverview = AnnotationTabs(model)
@@ -71,6 +76,8 @@ private class NetworkSelectionTabs(private val model: MainViewModel) : StackPane
 
     init {
         alignment = Pos.TOP_CENTER
+
+        contentPlaceholder.visibleProperty().bind(isEmpty(model.dataSets))
 
         tabPane.styleClass += "network-tabs"
         tabPane.side = Side.LEFT
