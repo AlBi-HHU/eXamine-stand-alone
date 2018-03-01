@@ -3,7 +3,6 @@ package org.cwi.examine.main.nodelinkcontour
 import javafx.beans.binding.Bindings.*
 import javafx.beans.binding.DoubleBinding
 import javafx.beans.property.SimpleListProperty
-import javafx.beans.property.SimpleMapProperty
 import javafx.collections.FXCollections
 import javafx.collections.FXCollections.observableArrayList
 import javafx.collections.FXCollections.observableHashMap
@@ -35,7 +34,6 @@ import java.util.stream.Collectors
 class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
 
     private val selectedAnnotations = SimpleListProperty(observableArrayList<NetworkAnnotation>())
-    private val annotationWeights = SimpleMapProperty(observableHashMap<NetworkAnnotation, Double>())
 
     private var layout: Layout? = null
     private val nodePositions = observableHashMap<NetworkNode, Point2D>()
@@ -64,8 +62,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         contourLayer.annotationsProperty().bind(selectedAnnotations)
 
         selectedAnnotations.bind(model.selectedAnnotationsProperty())
-        annotationWeights.bind(model.annotationWeightsProperty())
-        contourLayer.colorsProperty().bind(model.annotationColorProperty())
+        contourLayer.colorsProperty().set(model.annotationColors)
         nodeLayer.highlightedElementsProperty().bind(model.highlightedNodes())
         linkLayer.highlightedElementsProperty().bind(model.highlightedLinks())
     }
@@ -81,7 +78,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         if (newNetwork == null || oldNetwork != newNetwork) {
             layout = null
         } else {
-            layout = Layout(newNetwork, annotationWeights, layout)
+            layout = Layout(newNetwork, selectedAnnotations, layout)
 
             val newPositions = HashMap<NetworkNode, Point2D>()
             newNetwork.graph.vertexSet().forEach { node -> newPositions[node] = layout!!.position(node) }

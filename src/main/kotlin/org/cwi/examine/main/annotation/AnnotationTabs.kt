@@ -26,7 +26,7 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
     private fun createTab(category: NetworkAnnotationCategory): AnnotationTab {
 
         val tab = AnnotationTab(category)
-        tab.annotationColorsProperty().bind(model.annotationColorProperty())
+        tab.annotationColorsProperty().set(model.annotationColors)
         tab.highlightedAnnotationsProperty().bind(model.highlightedAnnotations())
         tab.onToggleAnnotationProperty().set(Consumer { model.toggleAnnotation(it) })
         tab.onHighlightAnnotationsProperty().set(Consumer { model.highlightAnnotations(it) })

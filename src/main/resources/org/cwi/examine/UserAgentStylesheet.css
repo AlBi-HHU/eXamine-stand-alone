@@ -2226,8 +2226,8 @@ is being used to size a border should also be in pixels.
 .tree-table-view:constrained-resize .filler {
     -fx-background-color: -fx-box-border, -fx-inner-border, -fx-body-color;
     -fx-background-insets: 0, 0 1 1 0, 1 2 2 1;
-    -fx-font-weight: bold;
-    -fx-size: 2em;
+    -fx-font-family: "Source Sans Pro SemiBold";
+    -fx-size: 1.833333em;
     -fx-text-fill: -fx-selection-bar-text;
     -fx-padding: 0.166667em;
 }

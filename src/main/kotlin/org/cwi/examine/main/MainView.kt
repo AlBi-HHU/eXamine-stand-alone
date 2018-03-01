@@ -56,6 +56,7 @@ class MainView : View() {
         barLabel.visibleProperty().bind(model.nodeColormap().isNotNull)
 
         val informationBar = BorderPane()
+        informationBar.styleClass.add("information-bar")
         val informationBox = HBox(barLabel, colorBar)
         informationBox.alignment = Pos.CENTER
         informationBar.center = informationBox

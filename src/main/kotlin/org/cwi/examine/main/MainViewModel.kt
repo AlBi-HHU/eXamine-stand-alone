@@ -5,6 +5,7 @@ import javafx.beans.binding.Bindings.createObjectBinding
 import javafx.beans.property.*
 import javafx.collections.FXCollections.*
 import javafx.collections.ObservableList
+import javafx.collections.ObservableMap
 import javafx.scene.paint.Color
 import org.cwi.examine.data.*
 import org.cwi.examine.visualization.color.BlueWhiteRed
@@ -31,8 +32,8 @@ class MainViewModel : Controller() {
     val activeCategories: ObservableList<NetworkAnnotationCategory> = observableArrayList()
 
     private val selectedAnnotations = SimpleListProperty(observableArrayList<NetworkAnnotation>())
-    private val annotationWeights = SimpleMapProperty(observableHashMap<NetworkAnnotation, Double>())
-    private val annotationColors = AnnotationColors()
+    private val annotationColorModel = AnnotationColors()
+    val annotationColors: ObservableMap<NetworkAnnotation, Color> = annotationColorModel.colorMap
 
     private val highlightedNodes = SimpleSetProperty(observableSet<NetworkNode>())
     private val highlightedLinks = SimpleSetProperty(observableSet<DefaultEdge>())
@@ -59,16 +60,27 @@ class MainViewModel : Controller() {
 
     /** Set the data set that is being worked on. */
     fun activateDataSet(dataSetToActivate: DataSet) {
+
+        // Annotations to preserve.
+        val preservedIds = selectedAnnotations.map(NetworkAnnotation::identifier)
+        val preservedIdToColor = annotationColorModel.colorMap.mapKeys { it.key.identifier }
+
         // Clear all selections, such that transition to new network is consistent.
         selectedAnnotations.clear()
-        annotationWeights.clear()
-        annotationColors.clear()
+        annotationColorModel.clear()
         activeCategories.clear()
         clearHighlights()
 
+        // Switch to new data set.
         activeDataSet = dataSetToActivate
-
         activeCategories.setAll(activeNetwork?.categories ?: emptyList())
+
+        // Restore previously selected annotations where possible for the new network.
+        val activationAnnotations = dataSetToActivate.network.annotations
+        selectedAnnotations.setAll(preservedIds.mapNotNull(activationAnnotations::get))
+        annotationColorModel.putAllColors(preservedIdToColor
+                .filterKeys(activationAnnotations::containsKey)
+                .mapKeys { activationAnnotations.getValue(it.key) })
     }
 
     /** Toggle the selected state of the given annotation. */
@@ -76,20 +88,11 @@ class MainViewModel : Controller() {
 
         if (selectedAnnotations.contains(annotation)) {
             selectedAnnotationsProperty().remove(annotation)
-            annotationWeightsProperty().remove(annotation)
-            annotationColors.releaseColor(annotation)
+            annotationColorModel.releaseColor(annotation)
         } else {
-            annotationColors.assignColor(annotation)
-            annotationWeightsProperty()[annotation] = DEFAULT_ANNOTATION_WEIGHT
+            annotationColorModel.assignColor(annotation)
             selectedAnnotationsProperty().add(annotation)
         }
-    }
-
-    /** Adjust the weight (importance) of the given annotation by the given weight change. */
-    fun changeAnnotationWeight(annotation: NetworkAnnotation, weightChange: Double) {
-        val currentWeight = annotationWeightsProperty()[annotation] ?: 1.0
-        val newWeight = Math.max(1.0, currentWeight + weightChange)
-        annotationWeightsProperty()[annotation] = newWeight
     }
 
     /**
@@ -156,11 +159,7 @@ class MainViewModel : Controller() {
 
     fun activeNetworkProperty(): ReadOnlyObjectProperty<Network?> = getProperty(MainViewModel::activeNetwork)
 
-    fun annotationWeightsProperty(): ReadOnlyMapProperty<NetworkAnnotation, Double> = annotationWeights
-
     fun selectedAnnotationsProperty(): ReadOnlyListProperty<NetworkAnnotation> = selectedAnnotations
-
-    fun annotationColorProperty(): ReadOnlyMapProperty<NetworkAnnotation, Color> = annotationColors.colorMapProperty()
 
     fun highlightedNodes(): ReadOnlySetProperty<NetworkNode> = highlightedNodes
 
@@ -172,7 +171,6 @@ class MainViewModel : Controller() {
 
     companion object {
         const val DATA_SET_DIRECTORY = "data-sets"
-        const val DEFAULT_ANNOTATION_WEIGHT = 1.0
     }
 
 }

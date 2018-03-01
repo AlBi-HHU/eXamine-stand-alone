@@ -1,6 +1,7 @@
 package org.cwi.examine.visualization.control
 
 import javafx.beans.binding.Bindings.createStringBinding
+import javafx.geometry.Pos
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.Control
 import javafx.scene.control.Skin
@@ -48,6 +49,9 @@ internal class ColorBarSkin(private val colorBar: ColorBar) : Skin<ColorBar> {
                     padding = box(0.em, 0.em, 0.em, 0.5.em)
                 }
             }
+
+            BorderPane.setAlignment(left, Pos.CENTER)
+            BorderPane.setAlignment(right, Pos.CENTER)
         }
 
         with(colorSequence) {

@@ -21,8 +21,7 @@ import java.util.*
 import java.util.Comparator.comparingInt
 
 class Layout(// Network and set topology.
-        val network: Network, weightedAnnotations: Map<NetworkAnnotation, Double>, oldLayout: Layout?) {
-    val weightedAnnotations: MutableMap<NetworkAnnotation, Double> = HashMap()
+        val network: Network, val selectedAnnotations: List<NetworkAnnotation>, oldLayout: Layout?) {
 
     val sets: MutableList<NetworkAnnotation> = ArrayList()
     val nodes: Array<NetworkNode>
@@ -47,10 +46,9 @@ class Layout(// Network and set topology.
     private var descent: Descent? = null
 
     init {
-        this.weightedAnnotations.putAll(weightedAnnotations)
 
         // Order annotations by size.
-        this.sets.addAll(weightedAnnotations.keys)
+        this.sets.addAll(selectedAnnotations)
         Collections.sort(this.sets, comparingInt { s2 -> s2.nodes.size })
 
         // Invert set membership for vertices.
@@ -307,7 +305,6 @@ class Layout(// Network and set topology.
         }
         // Add all set span edges.
         for (i in sets.indices) {
-            val annotation = sets[i]
             val sG = spanGraphs!![i]
 
             for (e in sG.edgeSet()) {
@@ -322,9 +319,8 @@ class Layout(// Network and set topology.
                     val rSI = index!![rSN.element]
                     val rTI = index!![rTN.element]
                     richGraph!!.setEdgeWeight(rE, Math.max(mD!![rSI!!][rTI!!],
-                            SET_EDGE_CONTRACTION / weightedAnnotations[annotation]!! * D!![rSI][rTI]))
+                            SET_EDGE_CONTRACTION / D!![rSI][rTI]))
                 }
-                //rE.memberships.add(s);
             }
         }
         // Infer edge to set memberships from matching vertices.

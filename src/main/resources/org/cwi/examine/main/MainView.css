@@ -3,3 +3,8 @@
     -fx-border-width:   1px 1px 1px 0;
     -fx-border-color:   -base-intensity-low;
 }
+
+.information-bar {
+    -fx-min-height: 2.5em;
+    -fx-max-height: 2.5em;
+}
