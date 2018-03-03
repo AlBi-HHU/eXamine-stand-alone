@@ -6,6 +6,10 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.Color.rgb
 import org.hhu.examine.data.NetworkAnnotation
 
+/**
+ * Assigns colors to annotations and keeps track of a palette of available colors.
+ * Colors are assigned in cyclic manner.
+ */
 internal class AnnotationColors {
 
     val colorMap: ObservableMap<NetworkAnnotation, Color> = observableHashMap()

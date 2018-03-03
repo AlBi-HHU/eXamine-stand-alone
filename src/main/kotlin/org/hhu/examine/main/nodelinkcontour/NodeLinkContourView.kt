@@ -9,12 +9,13 @@ import javafx.collections.FXCollections.observableHashMap
 import javafx.collections.ListChangeListener
 import javafx.event.EventHandler
 import javafx.geometry.Point2D
-import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.Pane
+import javafx.scene.layout.Region
 import org.hhu.examine.data.Network
 import org.hhu.examine.data.NetworkAnnotation
 import org.hhu.examine.data.NetworkNode
@@ -42,16 +43,18 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
     private val contourLayer = ContourLayer()
     private val linkLayer = NetworkElementLayer("network-link", this::createLinkRepresentation)
     private val nodeLayer = NetworkElementLayer("network-node", this::createNodeRepresentation)
-    private val layerStack = Group(contourLayer, linkLayer, nodeLayer)
+    private val layerGroup = Group(contourLayer, linkLayer, nodeLayer)
+    private val layerPane = Pane(layerGroup)
 
     init {
         styleClass.add("node-link-contour-view")
 
-        val layerContainer = BorderPane(layerStack)
-        BorderPane.setAlignment(layerStack, Pos.CENTER)
+        layerPane.maxWidth = Pane.USE_PREF_SIZE
+        layerPane.maxHeight = Pane.USE_PREF_SIZE
+
         isFitToHeight = true
         isFitToWidth = true
-        content = layerContainer
+        content = BorderPane(layerPane)
 
         model.activeNetworkProperty().addListener { _, oldNetwork, newNetwork ->
             onNetworkChange(oldNetwork, newNetwork)
@@ -141,6 +144,8 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
     private fun bindNodeY(node: NetworkNode): DoubleBinding {
         return createDoubleBinding(Callable { nodePositions.getOrDefault(node, Point2D.ZERO).y }, nodePositions)
     }
+
+    fun getImageExportableRegion(): Region = layerPane
 
     override fun getUserAgentStylesheet(): String =
             javaClass.getResource("NodeLinkContourView.css").toExternalForm()
