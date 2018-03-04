@@ -20,10 +20,12 @@ import org.jgrapht.graph.SimpleWeightedGraph
 import java.util.*
 import java.util.Comparator.comparingInt
 
-class Layout(// Network and set topology.
-        val network: Network, val selectedAnnotations: List<NetworkAnnotation>, oldLayout: Layout?) {
+class Layout(
+        val network: Network,
+        selectedAnnotations: List<NetworkAnnotation>,
+        oldLayout: Layout?) {
 
-    val sets: MutableList<NetworkAnnotation> = ArrayList()
+    private val sets: MutableList<NetworkAnnotation> = ArrayList()
     val nodes: Array<NetworkNode>
     val nodeMemberships: MutableMap<NetworkNode, MutableList<NetworkAnnotation>> = HashMap()
 
@@ -179,7 +181,6 @@ class Layout(// Network and set topology.
 
         return result
     }
-
 
     // Position of the given node, (0,0) iff null.
     fun position(node: RichNode?): Point2D {

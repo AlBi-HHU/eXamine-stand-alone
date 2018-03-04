@@ -14,7 +14,6 @@ import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.BorderPane
-import javafx.scene.layout.Pane
 import javafx.scene.layout.Region
 import org.hhu.examine.data.Network
 import org.hhu.examine.data.NetworkAnnotation
@@ -23,11 +22,12 @@ import org.hhu.examine.main.MainViewModel
 import org.hhu.examine.main.nodelinkcontour.layout.Contours
 import org.hhu.examine.main.nodelinkcontour.layout.Layout
 import org.jgrapht.graph.DefaultEdge
-import tornadofx.css
+import tornadofx.*
 import java.util.*
 import java.util.Arrays.asList
 import java.util.concurrent.Callable
 import java.util.stream.Collectors
+import kotlin.collections.set
 
 /**
  * Node, link, and contour depiction of a network with annotations.
@@ -43,14 +43,23 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
     private val contourLayer = ContourLayer()
     private val linkLayer = NetworkElementLayer("network-link", this::createLinkRepresentation)
     private val nodeLayer = NetworkElementLayer("network-node", this::createNodeRepresentation)
+
     private val layerGroup = Group(contourLayer, linkLayer, nodeLayer)
-    private val layerPane = Pane(layerGroup)
+    private val layerPane = stackpane {
+        children += layerGroup
+
+        minWidth = USE_PREF_SIZE
+        minHeight = USE_PREF_SIZE
+        maxWidth = Region.USE_PREF_SIZE
+        maxHeight = Region.USE_PREF_SIZE
+
+        style {
+            padding = box(1.em)
+        }
+    }
 
     init {
         styleClass.add("node-link-contour-view")
-
-        layerPane.maxWidth = Pane.USE_PREF_SIZE
-        layerPane.maxHeight = Pane.USE_PREF_SIZE
 
         isFitToHeight = true
         isFitToWidth = true

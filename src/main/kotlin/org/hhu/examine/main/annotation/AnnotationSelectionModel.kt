@@ -14,16 +14,14 @@ import org.hhu.examine.data.NetworkAnnotation
 import java.util.function.Consumer
 import java.util.stream.Collectors.toList
 
-internal class AnnotationSelectionModel
 /**
  * Builds a default TableViewSelectionModel instance with the provided
  * TableView.
  *
- * @param tableView The TableView upon which this selection model should
- * operate.
+ * @param tableView The TableView upon which this selection model should operate.
  * @throws NullPointerException TableView can not be null.
  */
-(tableView: TableView<NetworkAnnotation>) : TableView.TableViewSelectionModel<NetworkAnnotation>(tableView) {
+internal class AnnotationSelectionModel(tableView: TableView<NetworkAnnotation>) : TableView.TableViewSelectionModel<NetworkAnnotation>(tableView) {
 
     private val highlightedAnnotations = SimpleSetProperty(observableSet<NetworkAnnotation>())
     private val onToggleAnnotationProperty = SimpleObjectProperty<Consumer<NetworkAnnotation>>(Consumer { _ -> })
@@ -31,7 +29,6 @@ internal class AnnotationSelectionModel
     private val highlightedTablePositions = observableArrayList<TablePosition<*, *>>()
 
     init {
-
         highlightedAnnotations.addListener(SetChangeListener { _ -> updateHighlightedTablePositions() })
     }
 

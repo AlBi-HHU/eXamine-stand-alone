@@ -1,13 +1,16 @@
 package org.hhu.examine.main.annotation
 
 import javafx.beans.binding.Bindings
-import javafx.beans.property.*
+import javafx.beans.property.SimpleMapProperty
+import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
+import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.BorderPane
-import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
+import javafx.scene.shape.Circle
 import org.hhu.examine.data.NetworkAnnotation
 import org.hhu.examine.data.NetworkAnnotationCategory
 import org.hhu.examine.main.MainViewModel
@@ -100,8 +103,10 @@ internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
     private fun createRow(tableView: TableView<NetworkAnnotation>): TableRow<NetworkAnnotation> {
 
         val tableRow = TableRow<NetworkAnnotation>()
-        tableRow.setOnMouseEntered { _ -> onHighlightAnnotations.get().accept(
-                if (tableRow.item == null) Collections.emptyList() else Arrays.asList(tableRow.item)) }
+        tableRow.setOnMouseEntered { _ ->
+            onHighlightAnnotations.get().accept(
+                    if (tableRow.item == null) Collections.emptyList() else Arrays.asList(tableRow.item))
+        }
         tableRow.setOnMouseExited { _ -> onHighlightAnnotations.get().accept(Collections.emptyList()) }
 
         return tableRow
@@ -115,44 +120,31 @@ internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
             }
 
             override fun updateItem(optionalColor: Color?, empty: Boolean) {
-
-                val marker: Pane?
-
-                if (empty || optionalColor == null) {
-                    marker = null
+                graphic = if (empty || optionalColor == null) {
+                    null
                 } else {
-                    marker = Pane()
-                    marker.styleClass.add("marker")
-                    marker.style = "-fx-background-color: " + rgbString(optionalColor)
+                    annotationMarker(optionalColor)
                 }
-
-                graphic = marker
             }
         }
     }
 
-    private fun rgbString(color: Color): String {
-        return "rgba(" +
-                (255 * color.red).toInt() + "," +
-                (255 * color.green).toInt() + "," +
-                (255 * color.blue).toInt() + "," +
-                color.opacity + ")"
-    }
+    fun annotationColorsProperty() = annotationColors
 
-    fun annotationColorsProperty(): MapProperty<NetworkAnnotation, Color> {
-        return annotationColors
-    }
+    fun highlightedAnnotationsProperty() = annotationSelectionModel.highlightedAnnotationsProperty()
 
-    fun highlightedAnnotationsProperty(): SetProperty<NetworkAnnotation> {
-        return annotationSelectionModel.highlightedAnnotationsProperty()
-    }
+    fun onToggleAnnotationProperty() = onToggleAnnotation
 
-    fun onToggleAnnotationProperty(): SimpleObjectProperty<Consumer<NetworkAnnotation>> {
-        return onToggleAnnotation
-    }
+    fun onHighlightAnnotationsProperty() = onHighlightAnnotations
 
-    fun onHighlightAnnotationsProperty(): SimpleObjectProperty<Consumer<List<NetworkAnnotation>>> {
-        return onHighlightAnnotations
-    }
+}
 
+fun annotationMarker(color: Color): Node {
+    val marker = Circle()
+
+    marker.radius = 6.0
+    marker.fill = color
+    marker.style = "-fx-stroke: -base-intensity-low; -fx-stroke-width: 2px;"
+
+    return marker
 }

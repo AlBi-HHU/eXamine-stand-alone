@@ -7,6 +7,7 @@ import javafx.scene.control.Control
 import javafx.scene.control.Skin
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Pane
+import javafx.scene.shape.StrokeLineCap
 import org.hhu.examine.visualization.color.ColormapInterval
 import tornadofx.*
 import java.util.concurrent.Callable
@@ -94,6 +95,7 @@ internal class ColorBarCanvas(private val colorBar: ColorBar) : Pane() {
     private fun draw() {
         var g = canvas.graphicsContext2D
         g.clearRect(0.0, 0.0, width, height)
+        g.lineCap = StrokeLineCap.BUTT
 
         val colormap = colorBar.colormap?.colormap
         if (colormap != null) {
@@ -101,7 +103,7 @@ internal class ColorBarCanvas(private val colorBar: ColorBar) : Pane() {
             (0 until snapWidth).forEach {
                 val value = (it.toDouble() + 0.5) / snapWidth.toDouble()
                 g.stroke = colormap(value)
-                g.strokeLine(it.toDouble(), 0.0, it.toDouble(), height - 1.0)
+                g.strokeLine(it.toDouble() + .5, 0.0, it.toDouble() + .5, height)
             }
         }
     }

@@ -7,11 +7,12 @@ import javafx.scene.control.Label
 import javafx.scene.image.Image
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
+import org.hhu.examine.main.annotation.AnnotationLegend
 import org.hhu.examine.main.annotation.AnnotationTabs
 import org.hhu.examine.visualization.control.ColorBar
-import org.hhu.examine.visualization.imageToClipboard
-import org.hhu.examine.visualization.imageToFileByDialog
-import org.hhu.examine.visualization.regionToImage
+import org.hhu.examine.visualization.export.imageToClipboard
+import org.hhu.examine.visualization.export.imageToFileByDialog
+import org.hhu.examine.visualization.export.regionToImage
 import tornadofx.*
 import java.util.Arrays.asList
 
@@ -22,8 +23,11 @@ class MainView : View() {
 
     override val root = BorderPane()
 
-    private val colorLegend = ColorLegend(model)
+    private val nodeLinkContainer = BorderPane()
+    private val colorLegend = ScoreColorLegend(model)
     private val selectionTabs = DataSetSelectionTabs(model)
+
+    private val annotationLegend = AnnotationLegend(model)
 
     init {
         root.stylesheets += javaClass.getResource("MainView.css").toExternalForm()
@@ -39,7 +43,6 @@ class MainView : View() {
         root.right = annotationOverview
 
         // Node link contour and controls at the center.
-        val nodeLinkContainer = BorderPane()
         nodeLinkContainer.style = "-fx-padding: 0 .5em .5em 0"
         root.center = nodeLinkContainer
 
@@ -68,13 +71,16 @@ class MainView : View() {
     }
 
     private fun exportImage(): Image? = selectionTabs.getImageExportableRegion()?.let { region ->
-        regionToImage(region, 1.em.value, colorLegend)
+        nodeLinkContainer.right = annotationLegend
+        val image = regionToImage(region, 6.0, colorLegend, annotationLegend)
+        nodeLinkContainer.right = null
+        image
     }
 
 }
 
 /** Color bar with a score label. */
-private class ColorLegend(model: MainViewModel) : HBox() {
+private class ScoreColorLegend(model: MainViewModel) : HBox() {
 
     init {
         alignment = Pos.CENTER
