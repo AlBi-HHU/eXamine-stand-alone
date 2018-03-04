@@ -5,7 +5,8 @@ import com.vividsolutions.jts.geom.Polygon
 import com.vividsolutions.jts.operation.union.CascadedPolygonUnion
 import javafx.geometry.Point2D
 import javafx.scene.shape.*
-import java.lang.Math.*
+import java.lang.Math.cos
+import java.lang.Math.sin
 import java.util.*
 import java.util.Collections.emptyList
 
@@ -147,42 +148,42 @@ object Paths {
         val wellFormed = p1.distance(p2) < d13 && p2.distance(p3) < d13
 
         val lS: LineString
-        if (false && wellFormed && Math.abs(a4) > 0.001) {
-            val center = Point2D(
-                    p1.x + (v31.y * d21 - v21.y * d31) / a4,
-                    p1.y + (v21.x * d31 - v31.x * d21) / a4
-            )
-            val radius = Math.sqrt(
-                    d21 * d31 *
-                            (Math.pow(p3.x - p2.x, 2.0) + Math.pow(p3.y - p2.y, 2.0))
-            ) / Math.abs(a4)
-
-            var a1 = deltaAngle(center, p1)
-            val a2 = deltaAngle(center, p2)
-            var a3 = deltaAngle(center, p3)
-            if (a2 < a1 && a2 < a3 || a2 > a1 && a2 > a3) {
-                if (a1 < a3) {
-                    a3 -= 2 * PI
-                } else {
-                    a1 -= 2 * PI
-                }
-            }
-
-            val cs = arrayOfNulls<Coordinate>(segments)
-            for (i in 0 until segments) {
-                val fI = i.toDouble() / (segments - 1).toDouble()
-                val aI = (1 - fI) * a1 + fI * a3
-                val vI = unitCirclePoint(aI).multiply(radius).add(center)
-                cs[i] = Coordinate(vI.x, vI.y)
-            }
-
-            lS = GEOMETRY_FACTORY.createLineString(cs)
-        } else {
+//        if (wellFormed && Math.abs(a4) > 0.01) {
+//            val center = Point2D(
+//                    p1.x + (v31.y * d21 - v21.y * d31) / a4,
+//                    p1.y + (v21.x * d31 - v31.x * d21) / a4
+//            )
+//            val radius = Math.sqrt(
+//                    d21 * d31 *
+//                            (Math.pow(p3.x - p2.x, 2.0) + Math.pow(p3.y - p2.y, 2.0))
+//            ) / Math.abs(a4)
+//
+//            var a1 = deltaAngle(center, p1)
+//            val a2 = deltaAngle(center, p2)
+//            var a3 = deltaAngle(center, p3)
+//            if (a2 < a1 && a2 < a3 || a2 > a1 && a2 > a3) {
+//                if (a1 < a3) {
+//                    a3 -= 2 * PI
+//                } else {
+//                    a1 -= 2 * PI
+//                }
+//            }
+//
+//            val cs = arrayOfNulls<Coordinate>(segments)
+//            for (i in 0 until segments) {
+//                val fI = i.toDouble() / (segments - 1).toDouble()
+//                val aI = (1 - fI) * a1 + fI * a3
+//                val vI = unitCirclePoint(aI).multiply(radius).add(center)
+//                cs[i] = Coordinate(vI.x, vI.y)
+//            }
+//
+//            lS = GEOMETRY_FACTORY.createLineString(cs)
+//        } else {
             val cs = arrayOfNulls<Coordinate>(2)
             cs[0] = Coordinate(p1.x, p1.y)
             cs[1] = Coordinate(p3.x, p3.y)
             lS = GEOMETRY_FACTORY.createLineString(cs)
-        }// There is no circle, so take a straight line between p0 and p1.
+        //}// There is no circle, so take a straight line between p0 and p1.
 
         return lS
     }

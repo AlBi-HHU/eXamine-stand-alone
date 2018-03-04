@@ -1,7 +1,6 @@
 package org.hhu.examine.main.nodelinkcontour
 
 import javafx.beans.binding.Bindings.*
-import javafx.beans.binding.DoubleBinding
 import javafx.beans.property.SimpleListProperty
 import javafx.collections.FXCollections
 import javafx.collections.FXCollections.observableArrayList
@@ -154,16 +153,15 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         return label
     }
 
-    private fun bindNodeX(node: NetworkNode): DoubleBinding {
-        return createDoubleBinding(Callable { nodePositions.getOrDefault(node, Point2D.ZERO).x }, nodePositions)
-    }
+    private fun bindNodeX(node: NetworkNode) =
+            createDoubleBinding(Callable { nodePositions.getOrDefault(node, Point2D.ZERO).x }, nodePositions)
 
-    private fun bindNodeY(node: NetworkNode): DoubleBinding {
-        return createDoubleBinding(Callable { nodePositions.getOrDefault(node, Point2D.ZERO).y }, nodePositions)
-    }
+    private fun bindNodeY(node: NetworkNode) =
+            createDoubleBinding(Callable { nodePositions.getOrDefault(node, Point2D.ZERO).y }, nodePositions)
 
     fun getImageExportableRegion(): Region = layerPane
 
     override fun getUserAgentStylesheet(): String =
             javaClass.getResource("NodeLinkContourView.css").toExternalForm()
+
 }

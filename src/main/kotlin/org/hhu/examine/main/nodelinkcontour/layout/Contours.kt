@@ -26,7 +26,7 @@ class Contours {
     constructor(annotation: NetworkAnnotation, layout: Layout) {
         this.annotation = annotation
 
-        // Radius for smoothening contours.
+        // Radius for smooth contours.
         val smoothRadius = 4 * Layout.RIBBON_EXTENT
 
         val vertexHulls = ArrayList<Geometry>()
@@ -115,7 +115,7 @@ class Contours {
 
         val sG = ArrayList<Geometry>()
         for (i in 0 until gN) {
-            sG.add(g.getGeometryN(i).convexHull())
+            sG.add(g.getGeometryN(i)/*.convexHull()*/)
         }
 
         return CascadedPolygonUnion(sG).union()

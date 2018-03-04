@@ -521,34 +521,32 @@ class Layout(
 
     companion object {
 
-        val RIBBON_WIDTH = 8.0
-        val RIBBON_SPACE = 2.0
-        val RIBBON_EXTENT = RIBBON_WIDTH + RIBBON_SPACE
-        val LINK_WIDTH = 3.0
-        val NODE_OUTLINE = 4.0
-        val NODE_SPACE = 2.0
-        val NODE_MARGIN = 0.5 * NODE_OUTLINE + NODE_SPACE
-        val BUFFER_SEGMENTS = 5
-        val LINK_SEGMENTS = 10 //20;
+        const val RIBBON_WIDTH = 8.0
+        const val RIBBON_SPACE = 2.0
+        const val RIBBON_EXTENT = RIBBON_WIDTH + RIBBON_SPACE
+        const val LINK_WIDTH = 3.0
+        const val NODE_OUTLINE = 8.0
+        const val NODE_SPACE = 2.0
+        const val NODE_MARGIN = 0.5 * NODE_OUTLINE + NODE_SPACE
+        const val BUFFER_SEGMENTS = 5
+        const val LINK_SEGMENTS = 10
 
-        private val EDGE_SPACE = 50.0
-        private val INITIAL_ITERATIONS = 100000
-        private val PHASE_ITERATIONS = 10000
-        private val SET_EDGE_CONTRACTION = 0.5
+        private const val EDGE_SPACE = 50.0
+        private const val INITIAL_ITERATIONS = 10000
+        private const val PHASE_ITERATIONS = 10000
+        private const val SET_EDGE_CONTRACTION = 0.5
 
         // Dimensions of drawn node label.
         fun labelDimensions(node: NetworkNode, padding: Boolean): Point2D {
-            val bounds = Text(node.name).boundsInLocal
-            return Point2D(
-                    bounds.width + if (padding) bounds.height else 0.0,
-                    bounds.height + NODE_OUTLINE
-            )
+            val text = Text(node.name)
+            // TODO: Switch to actual network node dimensions.
+            text.style = "-fx-font-family: Source Sans Pro Regular; -fx-font-size: 1.2em; " +
+                    if (padding) "-fx-padding: 0 .5em 0 .5em"
+                    else ""
+            text.applyCss()
 
-            /*double height = textHeight();
-
-        StaticGraphics.textFont(graphics.draw.Parameters.labelFont);
-        return new Point2D(textWidth(node.toString()) + (padding ? height : 0),
-                 height + NODE_OUTLINE);*/
+            val bounds = text.boundsInLocal
+            return Point2D(bounds.width,bounds.height + NODE_OUTLINE)
         }
 
         fun labelSpacedDimensions(node: NetworkNode): Point2D {
