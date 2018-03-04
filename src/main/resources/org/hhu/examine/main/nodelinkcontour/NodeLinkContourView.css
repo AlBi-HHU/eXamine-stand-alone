@@ -1,0 +1,43 @@
+
+.node-link-contour-view {
+
+}
+
+.network-node {
+    -fx-background-color:   -base-intensity-high;
+    -fx-border-width:       3px;
+    -fx-border-color:       -base-intensity-low;
+
+    -fx-padding:            0 .5em 0 .5em;
+    -fx-border-radius:      2em;    /* High value to guarantee circular ends. */
+    -fx-background-radius:  2em;
+
+    -fx-cursor:             hand;
+}
+
+.network-node.highlighted {
+    -fx-background-color:   -base-intensity-lowest;
+    -fx-border-color:       -base-intensity-lowest;
+    -fx-text-fill:          -base-intensity-high;
+}
+
+.network-link {
+    -fx-stroke-width:   3px;
+    -fx-stroke:         -base-intensity-low;
+
+    -fx-cursor:         hand;
+}
+
+.network-link.highlighted {
+    -fx-stroke-width:   5px;
+    -fx-stroke:         -base-intensity-lowest;
+}
+
+.network-contour-ribbon {
+    -fx-stroke-width:   0px;
+}
+
+.network-contour-hard-outline {
+    -fx-stroke-width:   2px;
+    -fx-stroke:         -base-intensity-low;
+}
