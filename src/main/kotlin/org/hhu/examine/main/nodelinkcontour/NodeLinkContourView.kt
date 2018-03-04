@@ -23,6 +23,7 @@ import org.hhu.examine.main.nodelinkcontour.layout.Contours
 import org.hhu.examine.main.nodelinkcontour.layout.Layout
 import org.jgrapht.graph.DefaultEdge
 import tornadofx.*
+import java.awt.Desktop.isDesktopSupported
 import java.util.*
 import java.util.Arrays.asList
 import java.util.concurrent.Callable
@@ -142,6 +143,13 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
             else
                 "-fx-border-color: " + colormap(node.score).css
         }, model.nodeColormap()))
+
+        // If node has an associated URL, navigate to it.
+        label.onMouseClicked = EventHandler { _ ->
+            if (isDesktopSupported()) {
+                ProcessBuilder("x-www-browser", node.url).start()
+            }
+        }
 
         return label
     }
