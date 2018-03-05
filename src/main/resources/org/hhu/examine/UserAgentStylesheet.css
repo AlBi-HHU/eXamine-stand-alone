@@ -323,8 +323,8 @@ is being used to size a border should also be in pixels.
 
     -fx-focused-text-base-color: ladder(
         -fx-control-inner-background,
-        -base-intensity-highest 25%,
-        -base-intensity-lowest 75%
+        -base-intensity-lowest 25%,
+        -base-intensity-highest 75%
     );
     -fx-focused-mark-color : -fx-focused-text-base-color;
 
@@ -1384,7 +1384,7 @@ is being used to size a border should also be in pixels.
 }
 .menu-item >.label {
     -fx-padding: 0em 0.5em 0em 0em;
-    -fx-text-fill: -fx-text-base-color;
+    -fx-text-fill: -base-intensity-lowest;
 }
 .menu-item:focused {
      -fx-background: -fx-selection-bar;
@@ -1392,7 +1392,7 @@ is being used to size a border should also be in pixels.
      -fx-text-fill:  -fx-text-background-color;
 }
 .menu-item:focused > .label {
-    -fx-text-fill: -fx-focused-text-base-color;
+    -fx-text-fill: -base-intensity-highest;
 }
 .menu-item > .right-container {
     -fx-padding: 0em 0em 0em 0.5em;
