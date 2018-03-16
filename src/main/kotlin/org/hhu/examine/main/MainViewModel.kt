@@ -14,7 +14,9 @@ import org.jgrapht.graph.DefaultEdge
 import tornadofx.Controller
 import tornadofx.getProperty
 import tornadofx.property
+import java.awt.Desktop.isDesktopSupported
 import java.util.concurrent.Callable
+
 
 /** View model of the main UI. Maintains the exploration state of a data set that is being viewed. */
 class MainViewModel : Controller() {
@@ -153,6 +155,21 @@ class MainViewModel : Controller() {
         highlightedNodes.clear()
         highlightedLinks.clear()
         highlightedAnnotations.clear()
+    }
+
+    /** Open a web browser at the URL of the given element. */
+    fun openBrowser(element: NetworkElement) {
+
+        val url = element.url
+
+        // Try regular show document, fall back to process creation for unix.
+        try {
+            hostServices.showDocument(url)
+        } catch(ex: NoClassDefFoundError) {
+            if (isDesktopSupported()) {
+                ProcessBuilder("x-www-browser", url).start()
+            }
+        }
     }
 
     fun activeDataSetProperty(): ReadOnlyObjectProperty<DataSet?> = getProperty(MainViewModel::activeDataSet)

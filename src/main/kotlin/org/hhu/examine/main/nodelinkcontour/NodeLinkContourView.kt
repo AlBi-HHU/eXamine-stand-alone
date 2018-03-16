@@ -22,12 +22,12 @@ import org.hhu.examine.main.nodelinkcontour.layout.Contours
 import org.hhu.examine.main.nodelinkcontour.layout.Layout
 import org.jgrapht.graph.DefaultEdge
 import tornadofx.*
-import java.awt.Desktop.isDesktopSupported
 import java.util.*
 import java.util.Arrays.asList
 import java.util.concurrent.Callable
 import java.util.stream.Collectors
 import kotlin.collections.set
+
 
 /**
  * Node, link, and contour depiction of a network with annotations.
@@ -144,11 +144,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         }, model.nodeColormap()))
 
         // If node has an associated URL, navigate to it.
-        label.onMouseClicked = EventHandler { _ ->
-            if (isDesktopSupported()) {
-                ProcessBuilder("x-www-browser", node.url).start()
-            }
-        }
+        label.onMouseClicked = EventHandler { _ -> model.openBrowser(node) }
 
         return label
     }
