@@ -14,20 +14,19 @@ import javafx.scene.control.Label
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
-import org.hhu.examine.data.Network
-import org.hhu.examine.data.NetworkAnnotation
-import org.hhu.examine.data.NetworkNode
+import org.hhu.examine.data.model.Network
+import org.hhu.examine.data.model.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkLink
+import org.hhu.examine.data.model.NetworkNode
 import org.hhu.examine.main.MainViewModel
 import org.hhu.examine.main.nodelinkcontour.layout.Contours
 import org.hhu.examine.main.nodelinkcontour.layout.Layout
-import org.jgrapht.graph.DefaultEdge
 import tornadofx.*
 import java.util.*
 import java.util.Arrays.asList
 import java.util.concurrent.Callable
-import java.util.stream.Collectors
+import java.util.stream.Collectors.toMap
 import kotlin.collections.set
-
 
 /**
  * Node, link, and contour depiction of a network with annotations.
@@ -38,7 +37,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
 
     private var layout: Layout? = null
     private val nodePositions = observableHashMap<NetworkNode, Point2D>()
-    private val linkPositions = observableHashMap<DefaultEdge, Array<Point2D>>()
+    private val linkPositions = observableHashMap<NetworkLink, Array<Point2D>>()
 
     private val contourLayer = ContourLayer()
     private val linkLayer = NetworkElementLayer("network-link", this::createLinkRepresentation)
@@ -90,7 +89,10 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         if (newNetwork == null || oldNetwork != newNetwork) {
             layout = null
         } else {
-            layout = Layout(newNetwork, selectedAnnotations, layout)
+            val nodeLabels = model.activeNetwork.graph.vertexSet().mapNotNull { node ->
+                model.activeDataSet.nodes.stringColumns["Symbol"]?.get(node)?.let { Pair(node, it) }
+            }.toMap()
+            layout = Layout(newNetwork, nodeLabels, selectedAnnotations, layout)
 
             val newPositions = HashMap<NetworkNode, Point2D>()
             newNetwork.graph.vertexSet().forEach { node -> newPositions[node] = layout!!.position(node) }
@@ -103,25 +105,25 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
             contourLayer.contoursProperty().clear()
             contourLayer.contoursProperty().putAll(selectedAnnotations.stream()
                     .map { annotation -> Contours(annotation, layout!!) }
-                    .collect(Collectors.toMap(Contours::annotation, { it })))
+                    .collect(toMap(Contours::annotation, { it })))
         }
     }
 
-    private fun createLinkRepresentation(edge: DefaultEdge): Node {
-        val link = LinkRepresentation()
-        link.controlPointsProperty().bind(createObjectBinding(
-                Callable { FXCollections.observableList(asList(*linkPositions.getOrDefault(edge, arrayOf()))) },
+    private fun createLinkRepresentation(link: NetworkLink): Node {
+        val representation = LinkRepresentation()
+        representation.controlPointsProperty().bind(createObjectBinding(
+                Callable { FXCollections.observableList(asList(*linkPositions.getOrDefault(link, arrayOf()))) },
                 linkPositions))
 
         // Highlight on hover.
-        link.onMouseEntered = EventHandler { _ -> model.highlightLink(asList(edge)) }
-        link.onMouseExited = EventHandler { _ -> model.highlightLink(emptyList()) }
+        representation.onMouseEntered = EventHandler { _ -> model.highlightLink(asList(link)) }
+        representation.onMouseExited = EventHandler { _ -> model.highlightLink(emptyList()) }
 
-        return link
+        return representation
     }
 
     private fun createNodeRepresentation(node: NetworkNode): Node {
-        val label = Label(node.name)
+        val label = Label(model.activeDataSet.nodes.stringColumns["Symbol"]?.get(node))
 
         // Bind coordinate to node layout.
         label.layoutXProperty().bind(bindNodeX(node))
@@ -140,7 +142,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
             if (colormap == null)
                 ""
             else
-                "-fx-border-color: " + colormap(node.score).css
+                "-fx-border-color: " + colormap(model.activeDataSet.nodes.numberColumns["Score"]?.get(node)).css
         }, model.nodeColormap()))
 
         // If node has an associated URL, navigate to it.

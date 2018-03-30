@@ -10,7 +10,7 @@ import javafx.collections.SetChangeListener
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TablePosition
 import javafx.scene.control.TableView
-import org.hhu.examine.data.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkAnnotation
 import java.util.function.Consumer
 import java.util.stream.Collectors.toList
 

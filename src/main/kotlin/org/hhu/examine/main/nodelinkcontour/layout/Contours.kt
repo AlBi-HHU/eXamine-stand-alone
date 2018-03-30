@@ -3,7 +3,7 @@ package org.hhu.examine.main.nodelinkcontour.layout
 import com.vividsolutions.jts.geom.Coordinate
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.operation.union.CascadedPolygonUnion
-import org.hhu.examine.data.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.nodelinkcontour.layout.Paths.GEOMETRY_FACTORY
 import java.util.*
 import java.util.Collections.emptyList
@@ -36,7 +36,7 @@ class Contours {
             val edgeRadius = vertexIndex * Layout.RIBBON_EXTENT + smoothRadius
 
             // Radius of vertex (assuming rounded rectangle).
-            val vertexBounds = Layout.labelDimensions(v, false)
+            val vertexBounds = Layout.labelDimensions(layout.nodeLabels[v]!!, false)
             val vertexPos = layout.position(v)
             val vertexRadius = 0.5 * vertexBounds.y + Layout.NODE_MARGIN
             val totalRadius = vertexRadius + edgeRadius
@@ -79,7 +79,7 @@ class Contours {
         val vertexAntiHulls = ArrayList<Geometry>()
         for (v in antiVertices) {
             // Radius of vertex (assuming rounded rectangle).
-            val bounds = Layout.labelDimensions(v, false)
+            val bounds = Layout.labelDimensions(layout.nodeLabels[v]!!, false)
             val pos = layout.position(v)
             val radius = 0.5 * bounds.y + Layout.NODE_OUTLINE
 
@@ -90,7 +90,7 @@ class Contours {
             vertexAntiHulls.add(hull)
         }
 
-        val vertexContour = convexHulls(Paths.fastUnion(vertexHulls))
+        val vertexContour = Paths.fastUnion(vertexHulls)    //convexHulls(Paths.fastUnion(vertexHulls))
         val linkContour = Paths.fastUnion(linkHulls)
         val fullContour = vertexContour.union(linkContour)
         var smoothenedContour = fullContour.buffer(-smoothRadius, Layout.BUFFER_SEGMENTS)

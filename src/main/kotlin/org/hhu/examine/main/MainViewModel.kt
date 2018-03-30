@@ -7,38 +7,40 @@ import javafx.collections.FXCollections.*
 import javafx.collections.ObservableList
 import javafx.collections.ObservableMap
 import javafx.scene.paint.Color
-import org.hhu.examine.data.*
+import org.hhu.examine.data.csv.listDataSets
+import org.hhu.examine.data.csv.readDataSet
+import org.hhu.examine.data.model.*
+import org.hhu.examine.data.table.extrema
 import org.hhu.examine.visualization.color.BlueWhiteRed
 import org.hhu.examine.visualization.color.ColormapInterval
-import org.jgrapht.graph.DefaultEdge
 import tornadofx.Controller
 import tornadofx.getProperty
 import tornadofx.property
 import java.awt.Desktop.isDesktopSupported
+import java.io.File
 import java.util.concurrent.Callable
-
 
 /** View model of the main UI. Maintains the exploration state of a data set that is being viewed. */
 class MainViewModel : Controller() {
 
-    val dataSets: ObservableList<DataSet> = unmodifiableObservableList(observableArrayList(
+    val dataSets: ObservableList<File> = unmodifiableObservableList(observableArrayList(
             listDataSets(DATA_SET_DIRECTORY)
     ))
 
-    var activeDataSet: DataSet? by property()
+    var activeDataSet: DataSet by property(emptyDataSet())
         private set
 
-    var activeNetwork: Network? by property(Network())
+    var activeNetwork: Network by property(emptyNetwork())
         private set
 
-    val activeCategories: ObservableList<NetworkAnnotationCategory> = observableArrayList()
+    val activeCategories: ObservableList<String> = observableArrayList()
 
     private val selectedAnnotations = SimpleListProperty(observableArrayList<NetworkAnnotation>())
     private val annotationColorModel = AnnotationColors()
     val annotationColors: ObservableMap<NetworkAnnotation, Color> = annotationColorModel.colorMap
 
     private val highlightedNodes = SimpleSetProperty(observableSet<NetworkNode>())
-    private val highlightedLinks = SimpleSetProperty(observableSet<DefaultEdge>())
+    private val highlightedLinks = SimpleSetProperty(observableSet<NetworkLink>())
     private val highlightedAnnotations = SimpleSetProperty(observableSet<NetworkAnnotation>())
 
     private val nodeColormap: ObjectProperty<ColormapInterval?> = SimpleObjectProperty(null)
@@ -46,26 +48,33 @@ class MainViewModel : Controller() {
     init {
         // Induce active network from active data set.
         getProperty(MainViewModel::activeNetwork).bind(createObjectBinding(
-                Callable { activeDataSet?.let { it.network.induce(it.network.modules) } },
+                Callable {
+                    activeDataSet?.let { dataSet ->
+                        subNetworkByAnnotations(dataSet, dataSet.modules)
+                    }
+                },
                 activeDataSetProperty()
         ))
 
         // Derive colormap for node scores.
         nodeColormap.bind(Bindings.createObjectBinding(Callable {
-            val scoreExtrema = activeNetwork?.nodeScoreExtrema
+            val scoreExtrema = activeDataSet.nodes.numberColumns["Score"]?.extrema(activeNetwork.graph.vertexSet())
             val symmetricScoreExtrema = scoreExtrema?.expandToCenter(0.0)
             symmetricScoreExtrema?.let { ColormapInterval(BlueWhiteRed, it) }
         }, activeNetworkProperty()))
 
-        if (!dataSets.isEmpty()) activateDataSet(dataSets[0])
+        if (dataSets.isNotEmpty()) activateDataSet(dataSets[0])
     }
 
     /** Set the data set that is being worked on. */
-    fun activateDataSet(dataSetToActivate: DataSet) {
+    fun activateDataSet(dataSetFile: File) {
+
+        val dataSet = readDataSet(dataSetFile)
 
         // Annotations to preserve.
-        val preservedIds = selectedAnnotations.map(NetworkAnnotation::identifier)
-        val preservedIdToColor = annotationColorModel.colorMap.mapKeys { it.key.identifier }
+        val preservedIdToColor = annotationColorModel.colorMap.mapKeys { (annotation, color) ->
+            activeDataSet.annotations.identities[annotation]
+        }
 
         // Clear all selections, such that transition to new network is consistent.
         selectedAnnotations.clear()
@@ -74,15 +83,17 @@ class MainViewModel : Controller() {
         clearHighlights()
 
         // Switch to new data set.
-        activeDataSet = dataSetToActivate
-        activeCategories.setAll(activeNetwork?.categories ?: emptyList())
+        activeDataSet = dataSet
+        activeCategories.setAll(dataSet.annotationCategories.keys)
 
         // Restore previously selected annotations where possible for the new network.
-        val activationAnnotations = dataSetToActivate.network.annotations
-        selectedAnnotations.setAll(preservedIds.mapNotNull(activationAnnotations::get))
-        annotationColorModel.putAllColors(preservedIdToColor
-                .filterKeys(activationAnnotations::containsKey)
-                .mapKeys { activationAnnotations.getValue(it.key) })
+        val annotationsToColors = dataSet.annotations.rows.mapNotNull { annotation ->
+            val id = dataSet.annotations.identities[annotation]
+            val color = preservedIdToColor[id]
+            color?.let { Pair(annotation, color) }
+        }.toMap()
+        selectedAnnotations.setAll(annotationsToColors.keys)
+        annotationColorModel.putAllColors(annotationsToColors)
     }
 
     /** Toggle the selected state of the given annotation. */
@@ -117,14 +128,14 @@ class MainViewModel : Controller() {
         induceHighlightedAnnotations()
     }
 
-    fun highlightLink(edges: List<DefaultEdge>) {
+    fun highlightLink(links: List<NetworkLink>) {
         clearHighlights()
 
         activeNetwork?.graph?.let { graph ->
-            for (edge in edges) {
-                highlightedNodes.add(graph.getEdgeSource(edge))
-                highlightedNodes.add(graph.getEdgeTarget(edge))
-                highlightedLinks.add(edge)
+            for (link in links) {
+                highlightedNodes.add(graph.getEdgeSource(link))
+                highlightedNodes.add(graph.getEdgeTarget(link))
+                highlightedLinks.add(link)
             }
         }
 
@@ -143,9 +154,8 @@ class MainViewModel : Controller() {
 
     private fun induceHighlightedAnnotations() {
         if (highlightedNodes.get().isNotEmpty()) {
-            val annotationsToHighlight = activeNetwork?.annotations?.values
+            val annotationsToHighlight = activeNetwork?.annotations
                     ?.filter { it.nodes.containsAll(highlightedNodes.get()) }
-                    ?: emptyList()
             highlightedAnnotations.addAll(annotationsToHighlight)
         }
     }
@@ -158,29 +168,31 @@ class MainViewModel : Controller() {
     }
 
     /** Open a web browser at the URL of the given element. */
-    fun openBrowser(element: NetworkElement) {
+    fun openBrowser(node: NetworkNode) {
+        val hrefColumn = activeDataSet?.nodes?.hrefColumns["URL"]
+        if (hrefColumn != null) hrefColumn[node]?.let(::openBrowser)
+    }
 
-        val url = element.url
-
+    private fun openBrowser(url: String) {
         // Try regular show document, fall back to process creation for unix.
         try {
             hostServices.showDocument(url)
-        } catch(ex: NoClassDefFoundError) {
+        } catch (ex: NoClassDefFoundError) {
             if (isDesktopSupported()) {
                 ProcessBuilder("x-www-browser", url).start()
             }
         }
     }
 
-    fun activeDataSetProperty(): ReadOnlyObjectProperty<DataSet?> = getProperty(MainViewModel::activeDataSet)
+    fun activeDataSetProperty(): ReadOnlyObjectProperty<DataSet> = getProperty(MainViewModel::activeDataSet)
 
-    fun activeNetworkProperty(): ReadOnlyObjectProperty<Network?> = getProperty(MainViewModel::activeNetwork)
+    fun activeNetworkProperty(): ReadOnlyObjectProperty<Network> = getProperty(MainViewModel::activeNetwork)
 
     fun selectedAnnotationsProperty(): ReadOnlyListProperty<NetworkAnnotation> = selectedAnnotations
 
     fun highlightedNodes(): ReadOnlySetProperty<NetworkNode> = highlightedNodes
 
-    fun highlightedLinks(): ReadOnlySetProperty<DefaultEdge> = highlightedLinks
+    fun highlightedLinks(): ReadOnlySetProperty<NetworkLink> = highlightedLinks
 
     fun highlightedAnnotations(): ReadOnlySetProperty<NetworkAnnotation> = highlightedAnnotations
 

@@ -11,8 +11,7 @@ import javafx.scene.control.*
 import javafx.scene.layout.BorderPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
-import org.hhu.examine.data.NetworkAnnotation
-import org.hhu.examine.data.NetworkAnnotationCategory
+import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.MainViewModel
 import tornadofx.bind
 import java.util.*
@@ -26,9 +25,8 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
         tabs.bind(model.activeCategories, ::createTab)
     }
 
-    private fun createTab(category: NetworkAnnotationCategory): AnnotationTab {
-
-        val tab = AnnotationTab(category)
+    private fun createTab(category: String): AnnotationTab {
+        val tab = AnnotationTab(model, category)
         tab.annotationColorsProperty().set(model.annotationColors)
         tab.highlightedAnnotationsProperty().bind(model.highlightedAnnotations())
         tab.onToggleAnnotationProperty().set(Consumer { model.toggleAnnotation(it) })
@@ -42,7 +40,7 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
 
 }
 
-internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
+internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
 
     private val annotationTable: TableView<NetworkAnnotation>
     private val annotationSelectionModel: AnnotationSelectionModel
@@ -60,21 +58,30 @@ internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
 
         // Tab.
         isClosable = false
-        text = category.name
+        text = category
 
         // Table.
-        annotationTable = TableView(FXCollections.observableList(category.annotations))
+        val annotations = model.activeDataSet.annotationCategories[category] ?: emptyList()
+        annotationTable = TableView(FXCollections.observableList(annotations))
 
         val content = BorderPane(annotationTable)
         content.styleClass.add("annotation-tab")
         setContent(content)
 
-        nameColumn.text = category.name
+        nameColumn.text = category
 
         // Cell value factories.
         colorColumn.setCellValueFactory { bindColorValue(it) }
-        nameColumn.setCellValueFactory { SimpleStringProperty(it.value.name) }
-        scoreColumn.setCellValueFactory { SimpleObjectProperty(it.value.score) }
+        nameColumn.setCellValueFactory {
+            SimpleStringProperty(
+                    model.activeDataSet.annotations.stringColumns["Symbol"]?.get(it.value)
+            )
+        }
+        scoreColumn.setCellValueFactory {
+            SimpleObjectProperty(
+                    model.activeDataSet.annotations.numberColumns["Score"]?.get(it.value)
+            )
+        }
 
         // Cell factories.
 

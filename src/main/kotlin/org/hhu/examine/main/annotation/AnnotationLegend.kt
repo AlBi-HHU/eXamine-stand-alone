@@ -6,7 +6,7 @@ import javafx.scene.control.Label
 import javafx.scene.control.Skin
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
-import org.hhu.examine.data.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.MainViewModel
 import tornadofx.bind
 import tornadofx.em
@@ -30,7 +30,7 @@ private class AnnotationLegendSkin(private val legend: AnnotationLegend) : Skin<
     }
 
     private fun createLabel(annotation: NetworkAnnotation): Label {
-        val label = Label(annotation.name)
+        val label = Label(legend.model.activeDataSet.annotations.stringColumns["Symbol"]?.get(annotation))
 
         with(label) {
             graphic = annotationMarker(legend.model.annotationColors[annotation] ?: Color.TRANSPARENT)

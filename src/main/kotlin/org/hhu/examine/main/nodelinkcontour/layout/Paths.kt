@@ -115,12 +115,10 @@ object Paths {
             }
 
             pathElements.add(ClosePath())
-        } else {
-            pathElements.add(MoveTo(cs[0].x, cs[0].y))
-            for (j in 1 until cs.size) {
-                pathElements.add(LineTo(cs[j].x, cs[j].y))
-            }
-            pathElements.add(ClosePath())
+        } else if (cs.isNotEmpty()) {
+                pathElements.add(MoveTo(cs[0].x, cs[0].y))
+                for (j in 1 until cs.size) pathElements.add(LineTo(cs[j].x, cs[j].y))
+                pathElements.add(ClosePath())
         }// Path according to JTS samples.
     }
 

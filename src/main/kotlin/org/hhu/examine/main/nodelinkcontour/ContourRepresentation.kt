@@ -5,7 +5,7 @@ import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ObservableValue
 import javafx.scene.shape.Path
-import org.hhu.examine.data.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.nodelinkcontour.layout.Paths
 import java.util.Collections.emptyList
 
