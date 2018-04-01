@@ -1,7 +1,6 @@
 package org.hhu.examine.main
 
 import javafx.beans.binding.Bindings
-import javafx.beans.binding.Bindings.createObjectBinding
 import javafx.beans.property.*
 import javafx.collections.FXCollections.*
 import javafx.collections.ObservableList
@@ -27,9 +26,6 @@ class MainViewModel : Controller() {
             listDataSets(DATA_SET_DIRECTORY)
     ))
 
-    var activeDataSet: DataSet by property(emptyDataSet())
-        private set
-
     var activeNetwork: Network by property(emptyNetwork())
         private set
 
@@ -46,19 +42,9 @@ class MainViewModel : Controller() {
     private val nodeColormap: ObjectProperty<ColormapInterval?> = SimpleObjectProperty(null)
 
     init {
-        // Induce active network from active data set.
-        getProperty(MainViewModel::activeNetwork).bind(createObjectBinding(
-                Callable {
-                    activeDataSet?.let { dataSet ->
-                        subNetworkByAnnotations(dataSet, dataSet.modules)
-                    }
-                },
-                activeDataSetProperty()
-        ))
-
         // Derive colormap for node scores.
         nodeColormap.bind(Bindings.createObjectBinding(Callable {
-            val scoreExtrema = activeDataSet.nodes.numberColumns["Score"]?.extrema(activeNetwork.graph.vertexSet())
+            val scoreExtrema = activeNetwork.dataSet.nodes.numberColumns["Score"]?.extrema(activeNetwork.graph.vertexSet())
             val symmetricScoreExtrema = scoreExtrema?.expandToCenter(0.0)
             symmetricScoreExtrema?.let { ColormapInterval(BlueWhiteRed, it) }
         }, activeNetworkProperty()))
@@ -69,12 +55,11 @@ class MainViewModel : Controller() {
     /** Set the data set that is being worked on. */
     fun activateDataSet(dataSetFile: File) {
 
-        val dataSet = readDataSet(dataSetFile)
-
         // Annotations to preserve.
-        val preservedIdToColor = annotationColorModel.colorMap.mapKeys { (annotation, color) ->
-            activeDataSet.annotations.identities[annotation]
-        }
+        val preservedIdToColor = annotationColorModel.colorMap
+                .mapKeys { (annotation, color) ->
+                    activeNetwork.dataSet.annotations.identities[annotation]
+                }
 
         // Clear all selections, such that transition to new network is consistent.
         selectedAnnotations.clear()
@@ -82,16 +67,18 @@ class MainViewModel : Controller() {
         activeCategories.clear()
         clearHighlights()
 
-        // Switch to new data set.
-        activeDataSet = dataSet
+        // Switch to new network.
+        val dataSet = readDataSet(dataSetFile)
+        activeNetwork = subNetworkByAnnotations(dataSet, dataSet.modules)
         activeCategories.setAll(dataSet.annotationCategories.keys)
 
         // Restore previously selected annotations where possible for the new network.
-        val annotationsToColors = dataSet.annotations.rows.mapNotNull { annotation ->
-            val id = dataSet.annotations.identities[annotation]
-            val color = preservedIdToColor[id]
-            color?.let { Pair(annotation, color) }
-        }.toMap()
+        val annotationsToColors = dataSet.annotations.rows
+                .mapNotNull { annotation ->
+                    val id = dataSet.annotations.identities[annotation]
+                    val color = preservedIdToColor[id]
+                    color?.let { Pair(annotation, color) }
+                }.toMap()
         selectedAnnotations.setAll(annotationsToColors.keys)
         annotationColorModel.putAllColors(annotationsToColors)
     }
@@ -169,7 +156,7 @@ class MainViewModel : Controller() {
 
     /** Open a web browser at the URL of the given element. */
     fun openBrowser(node: NetworkNode) {
-        val hrefColumn = activeDataSet?.nodes?.hrefColumns["URL"]
+        val hrefColumn = activeNetwork?.dataSet?.nodes?.hrefColumns["URL"]
         if (hrefColumn != null) hrefColumn[node]?.let(::openBrowser)
     }
 
@@ -183,8 +170,6 @@ class MainViewModel : Controller() {
             }
         }
     }
-
-    fun activeDataSetProperty(): ReadOnlyObjectProperty<DataSet> = getProperty(MainViewModel::activeDataSet)
 
     fun activeNetworkProperty(): ReadOnlyObjectProperty<Network> = getProperty(MainViewModel::activeNetwork)
 

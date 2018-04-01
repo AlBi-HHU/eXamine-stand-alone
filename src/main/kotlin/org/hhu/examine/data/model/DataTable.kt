@@ -14,7 +14,7 @@ class DataTable<out R : Row>(
 
     override val columns = stringColumns + numberColumns + hrefColumns
 
-    val identities: Column<String> = stringColumns["Identity"] ?: emptyColumn("Identity")
+    val identities: Column<String> = stringColumns["Identifier"] ?: emptyColumn("Identifier")
 
     val categories: Column<String> = stringColumns["Category"] ?: emptyColumn("Category")
 

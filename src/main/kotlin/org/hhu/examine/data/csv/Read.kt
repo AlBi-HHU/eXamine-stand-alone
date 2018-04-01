@@ -33,9 +33,7 @@ fun readDataSet(directory: File): DataSet {
             }
     )
 
-    println(annotationTable.columns.size)
-
-    val linkTable = emptyDataTable<NetworkLink>()
+    val linkTable = loadLinks(listFilesWithPostFix(directory, ".links"), idToNode)
 
     return DataSet(
             directory.name,
@@ -116,6 +114,23 @@ private fun loadMemberships(files: Collection<File>): Map<String, Set<String>> {
     }
 
     return memberships
+}
+
+private fun loadLinks(files: Collection<File>, idToNode: Map<String, NetworkNode>): DataTable<NetworkLink> {
+    val links = ArrayList<NetworkLink>()
+
+    createReaders(files).forEach { reader ->
+        reader.forEach { line ->
+            if (line.size == 2) links.add(NetworkLink(links.size, idToNode[line[0]]!!, idToNode[line[1]]!!))
+        }
+    }
+
+    return DataTable(
+            links,
+            emptyMap(),
+            emptyMap(),
+            emptyMap()
+    )
 }
 
 private fun listFilesWithPostFix(directory: File, postFix: String): List<File> = directory

@@ -33,8 +33,8 @@ class MainView : View() {
         root.stylesheets += javaClass.getResource("MainView.css").toExternalForm()
         root.styleClass += "main-view"
 
-        titleProperty.bind(model.activeDataSetProperty().stringBinding { dataSet ->
-            "eXamine" + (dataSet?.name?.let { name -> " - $name" } ?: "")
+        titleProperty.bind(model.activeNetworkProperty().stringBinding { network ->
+            "eXamine" + (network?.dataSet?.name?.let { name -> " - $name" } ?: "")
         })
 
         // Annotation lists at the left.

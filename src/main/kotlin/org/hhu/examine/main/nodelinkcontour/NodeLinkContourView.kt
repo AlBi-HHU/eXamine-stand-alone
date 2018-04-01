@@ -90,7 +90,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
             layout = null
         } else {
             val nodeLabels = model.activeNetwork.graph.vertexSet().mapNotNull { node ->
-                model.activeDataSet.nodes.stringColumns["Symbol"]?.get(node)?.let { Pair(node, it) }
+                model.activeNetwork.dataSet.nodes.stringColumns["Symbol"]?.get(node)?.let { Pair(node, it) }
             }.toMap()
             layout = Layout(newNetwork, nodeLabels, selectedAnnotations, layout)
 
@@ -123,7 +123,9 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
     }
 
     private fun createNodeRepresentation(node: NetworkNode): Node {
-        val label = Label(model.activeDataSet.nodes.stringColumns["Symbol"]?.get(node))
+        val enclosedDataSet = model.activeNetwork.dataSet
+
+        val label = Label(enclosedDataSet.nodes.stringColumns["Symbol"]?.get(node))
 
         // Bind coordinate to node layout.
         label.layoutXProperty().bind(bindNodeX(node))
@@ -142,7 +144,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
             if (colormap == null)
                 ""
             else
-                "-fx-border-color: " + colormap(model.activeDataSet.nodes.numberColumns["Score"]?.get(node)).css
+                "-fx-border-color: " + colormap(enclosedDataSet.nodes.numberColumns["Score"]?.get(node)).css
         }, model.nodeColormap()))
 
         // If node has an associated URL, navigate to it.
