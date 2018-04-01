@@ -19,6 +19,8 @@ import java.awt.Desktop.isDesktopSupported
 import java.io.File
 import java.util.concurrent.Callable
 
+const val DATA_SET_DIRECTORY = "data-sets"
+
 /** View model of the main UI. Maintains the exploration state of a data set that is being viewed. */
 class MainViewModel : Controller() {
 
@@ -182,9 +184,5 @@ class MainViewModel : Controller() {
     fun highlightedAnnotations(): ReadOnlySetProperty<NetworkAnnotation> = highlightedAnnotations
 
     fun nodeColormap(): ReadOnlyObjectProperty<ColormapInterval?> = nodeColormap
-
-    companion object {
-        const val DATA_SET_DIRECTORY = "data-sets"
-    }
 
 }

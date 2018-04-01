@@ -4,6 +4,8 @@ import com.opencsv.CSVReader
 import org.hhu.examine.data.csv.columnwriter.ColumnWriters
 import org.hhu.examine.data.model.*
 import org.hhu.examine.data.table.Row
+import org.hhu.examine.data.table.SimpleTable
+import org.hhu.examine.data.table.emptyTable
 import java.io.File
 import java.io.FileReader
 import java.lang.IllegalStateException
@@ -94,9 +96,9 @@ private fun <R : Row> loadDataTable(files: Collection<File>, rowFactory: (Int, S
             idToIndex.mapValues { (id, index) -> elements[index] },
             DataTable(
                     elements,
-                    columnWriters.stringWriters.map { Pair(it.identifier, it.column) }.toMap(),
-                    columnWriters.numberWriters.map { Pair(it.identifier, it.column) }.toMap(),
-                    columnWriters.hrefWriters.map { Pair(it.identifier, it.column) }.toMap()
+                    SimpleTable(elements, columnWriters.stringWriters.map { Pair(it.identifier, it.column) }.toMap()),
+                    SimpleTable(elements, columnWriters.numberWriters.map { Pair(it.identifier, it.column) }.toMap()),
+                    SimpleTable(elements, columnWriters.hrefWriters.map { Pair(it.identifier, it.column) }.toMap())
             )
     )
 }
@@ -127,9 +129,9 @@ private fun loadLinks(files: Collection<File>, idToNode: Map<String, NetworkNode
 
     return DataTable(
             links,
-            emptyMap(),
-            emptyMap(),
-            emptyMap()
+            emptyTable(),
+            emptyTable(),
+            emptyTable()
     )
 }
 

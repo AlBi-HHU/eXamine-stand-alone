@@ -20,9 +20,7 @@ import java.util.concurrent.Callable
 class DataSetSelectionTabs(private val model: MainViewModel) : StackPane() {
 
     private val contentPlaceholder = Label(
-            "Please place your data sets in the '" +
-                    MainViewModel.DATA_SET_DIRECTORY +
-                    "' directory and try again.")
+            "Please place your data sets in the '$DATA_SET_DIRECTORY' directory and try again.")
     private val tabPane = TabPane()
     private val loadingLabel = StackPane(Label("Loading network..."))
 

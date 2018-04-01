@@ -1,8 +1,12 @@
 package org.hhu.examine.data.table
 
+import org.hhu.examine.math.Interval
 import java.util.*
+import org.hhu.examine.math.extrema as doubleExtrema
 
-class DenseColumn<out V>(
+fun Column<Double>.extrema(rows: Collection<Row>): Interval? = doubleExtrema(sliceNotNull(rows.toList()))
+
+class DenseColumn<out V : Any>(
         override val identifier: String,
         private val values: Array<V?>
 ) : Column<V> {

@@ -9,7 +9,7 @@ const val COLUMN_TYPE_TAG_STRING = "String"
 const val COLUMN_TYPE_TAG_NUMBER = "Number"
 const val COLUMN_TYPE_TAG_HREF = "Href"
 
-interface ColumnWriter<out C> {
+interface ColumnWriter<out C : Any> {
     val identifier: String
     val column: Column<C>
     fun writeValue(index: Int, value: String)
