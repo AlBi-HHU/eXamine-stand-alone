@@ -1,7 +1,6 @@
 package org.hhu.examine.data.csv
 
 import com.opencsv.CSVReader
-import org.hhu.examine.data.csv.columnwriter.ColumnWriters
 import org.hhu.examine.data.model.*
 import org.hhu.examine.data.table.Row
 import org.hhu.examine.data.table.SimpleTable
@@ -11,7 +10,6 @@ import java.io.FileReader
 import java.lang.IllegalStateException
 import java.util.*
 
-const val IDENTIFIER_HEADER = "Identifier"
 
 fun listDataSets(directory: String): List<File> = File(directory)
         .listFiles(File::isDirectory)
@@ -55,7 +53,7 @@ private fun <R : Row> loadDataTable(files: Collection<File>, rowFactory: (Int, S
     fileHeaders.zip(readers).forEach { (header, reader) ->
         if (header == null) throw IllegalStateException("Missing file header.")
 
-        val idIndex = header.indexOfFirst { it == IDENTIFIER_HEADER }
+        val idIndex = header.indexOfFirst { it == IDENTIFIER_COLUMN_NAME }
         if (idIndex < 0) throw IllegalStateException("Missing identifier column.")
 
         reader.forEach { line ->
@@ -79,7 +77,7 @@ private fun <R : Row> loadDataTable(files: Collection<File>, rowFactory: (Int, S
         val header = reader.readNext()!!
         val writers = header.map { it?.let(columnWriters.writerMap::get) }
 
-        val idIndex = header.indexOfFirst { it == IDENTIFIER_HEADER }
+        val idIndex = header.indexOfFirst { it == IDENTIFIER_COLUMN_NAME }
 
         reader.forEach { line ->
             val rowIdentifier = line[idIndex]

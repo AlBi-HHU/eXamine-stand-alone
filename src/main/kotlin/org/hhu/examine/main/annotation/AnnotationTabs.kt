@@ -61,7 +61,7 @@ internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
         text = category
 
         // Table.
-        val annotations = model.activeNetwork.dataSet.annotationCategories[category] ?: emptyList()
+        val annotations = model.dataSet.categories[category] ?: emptyList()
         annotationTable = TableView(FXCollections.observableList(annotations))
 
         val content = BorderPane(annotationTable)
@@ -74,12 +74,12 @@ internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
         colorColumn.setCellValueFactory { bindColorValue(it) }
         nameColumn.setCellValueFactory {
             SimpleStringProperty(
-                    model.activeNetwork.dataSet.annotations.stringColumns["Symbol"]?.get(it.value)
+                    model.dataSet.annotations.stringColumns["Symbol"]?.get(it.value)
             )
         }
         scoreColumn.setCellValueFactory {
             SimpleObjectProperty(
-                    model.activeNetwork.dataSet.annotations.numberColumns["Score"]?.get(it.value)
+                    model.dataSet.annotations.numberColumns["Score"]?.get(it.value)
             )
         }
 

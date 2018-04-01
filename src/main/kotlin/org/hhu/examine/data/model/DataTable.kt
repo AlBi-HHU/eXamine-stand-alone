@@ -5,7 +5,10 @@ import org.hhu.examine.data.table.Row
 import org.hhu.examine.data.table.Table
 import org.hhu.examine.data.table.emptyTable
 
-class DataTable<out R : Row>(
+const val IDENTIFIER_COLUMN_NAME = "Identifier"
+const val CATEGORY_COLUMN_NAME = "Category"
+
+class DataTable<R : Row>(
         override val rows: List<R>,
         val stringColumns: Table<R, String>,
         val numberColumns: Table<R, Double>,
@@ -14,9 +17,18 @@ class DataTable<out R : Row>(
 
     override val columns = stringColumns.columns + numberColumns.columns + hrefColumns.columns
 
-    val identities: Column<String> = stringColumns["Identifier"]
+    val identities: Column<String> = stringColumns[IDENTIFIER_COLUMN_NAME]
 
-    val categories: Column<String> = stringColumns["Category"]
+    val categories: Column<String> = stringColumns[CATEGORY_COLUMN_NAME]
+
+    override fun select(rows: List<R>): DataTable<R> = DataTable(
+            rows,
+            stringColumns.select(rows),
+            numberColumns.select(rows),
+            hrefColumns.select(rows)
+    )
+
+    override fun filter(predicate: (R) -> Boolean): DataTable<R> = select(rows.filter(predicate))
 
 }
 

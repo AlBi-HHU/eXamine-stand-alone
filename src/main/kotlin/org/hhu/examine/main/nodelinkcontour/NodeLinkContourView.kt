@@ -90,7 +90,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
             layout = null
         } else {
             val nodeLabels = model.activeNetwork.graph.vertexSet().mapNotNull { node ->
-                model.activeNetwork.dataSet.nodes.stringColumns["Symbol"]?.get(node)?.let { Pair(node, it) }
+                model.activeNetwork.nodes.stringColumns["Symbol"]?.get(node)?.let { Pair(node, it) }
             }.toMap()
             layout = Layout(newNetwork, nodeLabels, selectedAnnotations, layout)
 
@@ -123,7 +123,7 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
     }
 
     private fun createNodeRepresentation(node: NetworkNode): Node {
-        val enclosedDataSet = model.activeNetwork.dataSet
+        val enclosedDataSet = model.dataSet
 
         val label = Label(enclosedDataSet.nodes.stringColumns["Symbol"]?.get(node))
 

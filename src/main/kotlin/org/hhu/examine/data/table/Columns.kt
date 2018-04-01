@@ -4,7 +4,7 @@ import org.hhu.examine.math.Interval
 import java.util.*
 import org.hhu.examine.math.extrema as doubleExtrema
 
-fun Column<Double>.extrema(rows: Collection<Row>): Interval? = doubleExtrema(sliceNotNull(rows.toList()))
+fun Column<Double>.extrema(rows: Collection<Row>): Interval? = doubleExtrema(getNotNull(rows.toList()))
 
 class DenseColumn<out V : Any>(
         override val identifier: String,

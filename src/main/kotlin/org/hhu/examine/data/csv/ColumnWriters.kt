@@ -1,4 +1,4 @@
-package org.hhu.examine.data.csv.columnwriter
+package org.hhu.examine.data.csv
 
 import org.hhu.examine.data.table.Column
 import org.hhu.examine.data.table.DenseColumn

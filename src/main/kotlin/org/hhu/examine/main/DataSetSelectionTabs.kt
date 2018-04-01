@@ -47,7 +47,7 @@ class DataSetSelectionTabs(private val model: MainViewModel) : StackPane() {
 
         pane.contentProperty().bind(Bindings.createObjectBinding(
                 Callable {
-                    if (model.activeNetwork.dataSet.name == dataSet.name)
+                    if (model.dataSet.name == dataSet.name)
                         NodeLinkContourView(model)
                     else
                         loadingLabel

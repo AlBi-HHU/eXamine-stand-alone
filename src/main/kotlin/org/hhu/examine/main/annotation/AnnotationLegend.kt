@@ -30,7 +30,7 @@ private class AnnotationLegendSkin(private val legend: AnnotationLegend) : Skin<
     }
 
     private fun createLabel(annotation: NetworkAnnotation): Label {
-        val label = Label(legend.model.activeNetwork.dataSet.annotations.stringColumns["Symbol"]?.get(annotation))
+        val label = Label(legend.model.dataSet.annotations.stringColumns["Symbol"]?.get(annotation))
 
         with(label) {
             graphic = annotationMarker(legend.model.annotationColors[annotation] ?: Color.TRANSPARENT)

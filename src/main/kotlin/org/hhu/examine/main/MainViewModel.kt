@@ -28,6 +28,9 @@ class MainViewModel : Controller() {
             listDataSets(DATA_SET_DIRECTORY)
     ))
 
+    var dataSet: DataSet by property(emptyDataSet())
+        private set
+
     var activeNetwork: Network by property(emptyNetwork())
         private set
 
@@ -46,7 +49,7 @@ class MainViewModel : Controller() {
     init {
         // Derive colormap for node scores.
         nodeColormap.bind(Bindings.createObjectBinding(Callable {
-            val scoreExtrema = activeNetwork.dataSet.nodes.numberColumns["Score"]?.extrema(activeNetwork.graph.vertexSet())
+            val scoreExtrema = dataSet.nodes.numberColumns["Score"]?.extrema(activeNetwork.graph.vertexSet())
             val symmetricScoreExtrema = scoreExtrema?.expandToCenter(0.0)
             symmetricScoreExtrema?.let { ColormapInterval(BlueWhiteRed, it) }
         }, activeNetworkProperty()))
@@ -60,7 +63,7 @@ class MainViewModel : Controller() {
         // Annotations to preserve.
         val preservedIdToColor = annotationColorModel.colorMap
                 .mapKeys { (annotation, color) ->
-                    activeNetwork.dataSet.annotations.identities[annotation]
+                    dataSet.annotations.identities[annotation]
                 }
 
         // Clear all selections, such that transition to new network is consistent.
@@ -69,10 +72,11 @@ class MainViewModel : Controller() {
         activeCategories.clear()
         clearHighlights()
 
-        // Switch to new network.
-        val dataSet = readDataSet(dataSetFile)
-        activeNetwork = subNetworkByAnnotations(dataSet, dataSet.modules)
-        activeCategories.setAll(dataSet.annotationCategories.keys)
+        // Transition to new data set and selected network.
+        activeNetwork = emptyNetwork()
+        dataSet = readDataSet(dataSetFile)
+        activeNetwork = dataSet.induceFromAnnotations(dataSet.modules)
+        activeCategories.setAll(dataSet.categories.keys)
 
         // Restore previously selected annotations where possible for the new network.
         val annotationsToColors = dataSet.annotations.rows
@@ -145,7 +149,7 @@ class MainViewModel : Controller() {
         if (highlightedNodes.get().isNotEmpty()) {
             val annotationsToHighlight = activeNetwork?.annotations
                     ?.filter { it.nodes.containsAll(highlightedNodes.get()) }
-            highlightedAnnotations.addAll(annotationsToHighlight)
+            highlightedAnnotations.addAll(annotationsToHighlight.rows)
         }
     }
 
@@ -158,7 +162,7 @@ class MainViewModel : Controller() {
 
     /** Open a web browser at the URL of the given element. */
     fun openBrowser(node: NetworkNode) {
-        val hrefColumn = activeNetwork?.dataSet?.nodes?.hrefColumns["URL"]
+        val hrefColumn = dataSet?.nodes?.hrefColumns["URL"]
         if (hrefColumn != null) hrefColumn[node]?.let(::openBrowser)
     }
 
@@ -172,6 +176,8 @@ class MainViewModel : Controller() {
             }
         }
     }
+
+    fun dataSetProperty(): ReadOnlyObjectProperty<DataSet> = getProperty(MainViewModel::dataSet)
 
     fun activeNetworkProperty(): ReadOnlyObjectProperty<Network> = getProperty(MainViewModel::activeNetwork)
 
