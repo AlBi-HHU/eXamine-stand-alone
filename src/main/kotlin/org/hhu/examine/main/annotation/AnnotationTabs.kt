@@ -13,7 +13,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
 import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.MainViewModel
-import tornadofx.bind
+import org.hhu.examine.property.bind
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Consumer
@@ -22,7 +22,7 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
 
     init {
         styleClass.add("annotation-tabs")
-        tabs.bind(model.activeCategories, ::createTab)
+        tabs.bind(model.dataSetProperty(), { it.categories.keys.map(::createTab) })
     }
 
     private fun createTab(category: String): AnnotationTab {
@@ -31,7 +31,6 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
         tab.highlightedAnnotationsProperty().bind(model.highlightedAnnotations())
         tab.onToggleAnnotationProperty().set(Consumer { model.toggleAnnotation(it) })
         tab.onHighlightAnnotationsProperty().set(Consumer { model.highlightAnnotations(it) })
-
         return tab
     }
 

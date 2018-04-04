@@ -34,8 +34,6 @@ class MainViewModel : Controller() {
     var activeNetwork: Network by property(emptyNetwork())
         private set
 
-    val activeCategories: ObservableList<String> = observableArrayList()
-
     private val selectedAnnotations = SimpleListProperty(observableArrayList<NetworkAnnotation>())
     private val annotationColorModel = AnnotationColors()
     val annotationColors: ObservableMap<NetworkAnnotation, Color> = annotationColorModel.colorMap
@@ -69,14 +67,12 @@ class MainViewModel : Controller() {
         // Clear all selections, such that transition to new network is consistent.
         selectedAnnotations.clear()
         annotationColorModel.clear()
-        activeCategories.clear()
         clearHighlights()
 
         // Transition to new data set and selected network.
         activeNetwork = emptyNetwork()
         dataSet = readDataSet(dataSetFile)
         activeNetwork = dataSet.induceFromAnnotations(dataSet.modules)
-        activeCategories.setAll(dataSet.categories.keys)
 
         // Restore previously selected annotations where possible for the new network.
         val annotationsToColors = dataSet.annotations.rows
