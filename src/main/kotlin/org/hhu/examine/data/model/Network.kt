@@ -1,22 +1,15 @@
 package org.hhu.examine.data.model
 
-import org.hhu.examine.data.table.Row
 import org.jgrapht.UndirectedGraph
 import org.jgrapht.graph.Pseudograph
 
-class NetworkNode(override val index: Int) : Row
-
-class NetworkLink(override val index: Int, val source: NetworkNode, val target: NetworkNode) : Row
-
-class NetworkAnnotation(override val index: Int, val nodes: Set<NetworkNode>) : Row
-
 interface Network {
 
-    val nodes: DataTable<NetworkNode>
+    val nodes: NetworkTable<NetworkNode>
 
-    val links: DataTable<NetworkLink>
+    val links: NetworkTable<NetworkLink>
 
-    val annotations: DataTable<NetworkAnnotation>
+    val annotations: NetworkTable<NetworkAnnotation>
 
     val graph: UndirectedGraph<NetworkNode, NetworkLink>
 
@@ -26,7 +19,9 @@ interface Network {
         return SimpleNetwork(
                 nodes.select(nodesToSelect),
                 links.filter { nodeSet.contains(it.source) && nodeSet.contains(it.target) },
-                annotations.filter { it.nodes.any(nodeSet::contains) }
+                annotations
+                        .filter { it.nodes.any(nodeSet::contains) }
+                        .map { NetworkAnnotation(it.index, it.nodes.filter(nodeSet::contains).toSet()) }
         )
     }
 
@@ -36,15 +31,15 @@ interface Network {
 }
 
 fun emptyNetwork(): Network = SimpleNetwork(
-        emptyDataTable(),
-        emptyDataTable(),
-        emptyDataTable()
+        emptyNetworkTable(),
+        emptyNetworkTable(),
+        emptyNetworkTable()
 )
 
 private class SimpleNetwork(
-        override val nodes: DataTable<NetworkNode>,
-        override val links: DataTable<NetworkLink>,
-        override val annotations: DataTable<NetworkAnnotation>
+        override val nodes: NetworkTable<NetworkNode>,
+        override val links: NetworkTable<NetworkLink>,
+        override val annotations: NetworkTable<NetworkAnnotation>
 ) : Network {
 
     override val graph by lazy { networkToGraph(this) }

@@ -14,7 +14,6 @@ import javafx.scene.shape.Circle
 import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.MainViewModel
 import org.hhu.examine.property.bind
-import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Consumer
 
@@ -28,9 +27,9 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
     private fun createTab(category: String): AnnotationTab {
         val tab = AnnotationTab(model, category)
         tab.annotationColorsProperty().set(model.annotationColors)
-        tab.highlightedAnnotationsProperty().bind(model.highlightedAnnotations())
+        tab.highlightedAnnotationsProperty().set(model.highlightedAnnotations)
         tab.onToggleAnnotationProperty().set(Consumer { model.toggleAnnotation(it) })
-        tab.onHighlightAnnotationsProperty().set(Consumer { model.highlightAnnotations(it) })
+        tab.onHighlightAnnotationsProperty().set(Consumer { model.hover(it) })
         return tab
     }
 
@@ -51,7 +50,7 @@ internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
     private val scoreColumn = TableColumn<NetworkAnnotation, Double>("Score")
 
     private val onToggleAnnotation = SimpleObjectProperty<Consumer<NetworkAnnotation>>(Consumer { _ -> })
-    private val onHighlightAnnotations = SimpleObjectProperty<Consumer<List<NetworkAnnotation>>>(Consumer { _ -> })
+    private val onHighlightAnnotations = SimpleObjectProperty<Consumer<NetworkAnnotation?>>(Consumer { _ -> })
 
     init {
 
@@ -110,10 +109,9 @@ internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
 
         val tableRow = TableRow<NetworkAnnotation>()
         tableRow.setOnMouseEntered { _ ->
-            onHighlightAnnotations.get().accept(
-                    if (tableRow.item == null) Collections.emptyList() else Arrays.asList(tableRow.item))
+            onHighlightAnnotations.get().accept(tableRow.item)
         }
-        tableRow.setOnMouseExited { _ -> onHighlightAnnotations.get().accept(Collections.emptyList()) }
+        tableRow.setOnMouseExited { _ -> onHighlightAnnotations.get().accept(null) }
 
         return tableRow
     }

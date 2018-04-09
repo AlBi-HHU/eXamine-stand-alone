@@ -2,7 +2,6 @@ package org.hhu.examine.data.csv
 
 import com.opencsv.CSVReader
 import org.hhu.examine.data.model.*
-import org.hhu.examine.data.table.Row
 import org.hhu.examine.data.table.SimpleTable
 import org.hhu.examine.data.table.emptyTable
 import java.io.File
@@ -43,7 +42,7 @@ fun readDataSet(directory: File): DataSet {
     )
 }
 
-private fun <R : Row> loadDataTable(files: Collection<File>, rowFactory: (Int, String) -> R): Pair<Map<String, R>, DataTable<R>> {
+private fun <R : NetworkRow> loadDataTable(files: Collection<File>, rowFactory: (Int, String) -> R): Pair<Map<String, R>, NetworkTable<R>> {
 
     // Construct identifier index.
     val readers = createReaders(files)
@@ -92,7 +91,7 @@ private fun <R : Row> loadDataTable(files: Collection<File>, rowFactory: (Int, S
 
     return Pair(
             idToIndex.mapValues { (id, index) -> elements[index] },
-            DataTable(
+            NetworkTable(
                     elements,
                     SimpleTable(elements, columnWriters.stringWriters.map { Pair(it.identifier, it.column) }.toMap()),
                     SimpleTable(elements, columnWriters.numberWriters.map { Pair(it.identifier, it.column) }.toMap()),
@@ -116,7 +115,7 @@ private fun loadMemberships(files: Collection<File>): Map<String, Set<String>> {
     return memberships
 }
 
-private fun loadLinks(files: Collection<File>, idToNode: Map<String, NetworkNode>): DataTable<NetworkLink> {
+private fun loadLinks(files: Collection<File>, idToNode: Map<String, NetworkNode>): NetworkTable<NetworkLink> {
     val links = ArrayList<NetworkLink>()
 
     createReaders(files).forEach { reader ->
@@ -125,7 +124,7 @@ private fun loadLinks(files: Collection<File>, idToNode: Map<String, NetworkNode
         }
     }
 
-    return DataTable(
+    return NetworkTable(
             links,
             emptyTable(),
             emptyTable(),

@@ -30,6 +30,8 @@ interface Table<R : Row, out C : Any> {
 
     fun filter(predicate: (R) -> Boolean): Table<R, C> = select(rows.filter(predicate))
 
+    fun <D : Row> map(transform: (R) -> D): Table<D, C> = SimpleTable(rows.map(transform), columns)
+
 }
 
 

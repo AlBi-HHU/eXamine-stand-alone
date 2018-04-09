@@ -74,8 +74,8 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
 
         selectedAnnotations.bind(model.selectedAnnotationsProperty())
         contourLayer.colorsProperty().set(model.annotationColors)
-        nodeLayer.highlightedElementsProperty().bind(model.highlightedNodes())
-        linkLayer.highlightedElementsProperty().bind(model.highlightedLinks())
+        nodeLayer.highlightedElementsProperty().set(model.highlightedNodes)
+        linkLayer.highlightedElementsProperty().set(model.highlightedLinks)
     }
 
     private fun onNetworkChange(oldNetwork: Network?, newNetwork: Network?) {
@@ -116,8 +116,8 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
                 linkPositions))
 
         // Highlight on hover.
-        representation.onMouseEntered = EventHandler { _ -> model.highlightLink(asList(link)) }
-        representation.onMouseExited = EventHandler { _ -> model.highlightLink(emptyList()) }
+        representation.onMouseEntered = EventHandler { _ -> model.hover(link) }
+        representation.onMouseExited = EventHandler { _ -> model.hover(null) }
 
         return representation
     }
@@ -136,8 +136,8 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
         label.translateYProperty().bind(label.heightProperty().multiply(-.5))
 
         // Highlight on hover.
-        label.onMouseEntered = EventHandler { _ -> model.highlightNodes(asList(node)) }
-        label.onMouseExited = EventHandler { _ -> model.highlightNodes(emptyList()) }
+        label.onMouseEntered = EventHandler { _ -> model.hover(node) }
+        label.onMouseExited = EventHandler { _ -> model.hover(null) }
 
         label.styleProperty().bind(createStringBinding(Callable {
             val colormap = model.nodeColormap().get()

@@ -5,9 +5,9 @@ const val OTHER_CATEGORY = "Miscellaneous"
 
 class DataSet(
         val name: String,
-        override val nodes: DataTable<NetworkNode>,
-        override val links: DataTable<NetworkLink>,
-        override val annotations: DataTable<NetworkAnnotation>
+        override val nodes: NetworkTable<NetworkNode>,
+        override val links: NetworkTable<NetworkLink>,
+        override val annotations: NetworkTable<NetworkAnnotation>
 ) : Network {
 
     override val graph by lazy { networkToGraph(this) }
@@ -22,7 +22,7 @@ class DataSet(
 
 fun emptyDataSet() = DataSet(
         "Empty DataSet",
-        emptyDataTable(),
-        emptyDataTable(),
-        emptyDataTable()
+        emptyNetworkTable(),
+        emptyNetworkTable(),
+        emptyNetworkTable()
 )
