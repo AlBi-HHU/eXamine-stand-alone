@@ -4,10 +4,10 @@ import org.hhu.examine.data.table.Column
 import org.hhu.examine.data.table.DenseColumn
 import org.hhu.examine.data.table.DenseDoubleColumn
 
-const val COLUMN_TYPE_DELIMITER = ':'
-const val COLUMN_TYPE_TAG_STRING = "String"
-const val COLUMN_TYPE_TAG_NUMBER = "Number"
-const val COLUMN_TYPE_TAG_HREF = "Href"
+private const val COLUMN_TYPE_DELIMITER = ':'
+private const val COLUMN_TYPE_TAG_STRING = "String"
+private const val COLUMN_TYPE_TAG_NUMBER = "Number"
+private const val COLUMN_TYPE_TAG_HREF = "Href"
 
 interface ColumnWriter<out C : Any> {
     val identifier: String
@@ -16,28 +16,20 @@ interface ColumnWriter<out C : Any> {
 }
 
 class ColumnWriters(rowCount: Int, columnHeaders: List<String>) {
-    private val completeHeaders = addImplicitColumnTypes(columnHeaders)
-
     val stringWriters: List<ColumnWriter<String>> =
-            (columnIdentifiersForType(completeHeaders, COLUMN_TYPE_TAG_STRING) + columnIdentifiersForNoType(completeHeaders))
+            (columnIdentifiersForType(columnHeaders, COLUMN_TYPE_TAG_STRING) + columnIdentifiersForNoType(columnHeaders))
                     .map { StringColumnWriter(it, rowCount) }
-    val numberWriters: List<ColumnWriter<Double>> = columnIdentifiersForType(completeHeaders, COLUMN_TYPE_TAG_NUMBER)
+    val numberWriters: List<ColumnWriter<Double>> = columnIdentifiersForType(columnHeaders, COLUMN_TYPE_TAG_NUMBER)
             .map { NumberColumnWriter(it, rowCount) }
-    val hrefWriters: List<ColumnWriter<String>> = columnIdentifiersForType(completeHeaders, COLUMN_TYPE_TAG_HREF)
+    val hrefWriters: List<ColumnWriter<String>> = columnIdentifiersForType(columnHeaders, COLUMN_TYPE_TAG_HREF)
             .map { StringColumnWriter(it, rowCount) }
 
-    val writerMap = (stringWriters + numberWriters + hrefWriters)
+    private val writerMap = (stringWriters + numberWriters + hrefWriters)
             .map { Pair(it.identifier, it) }
             .toMap()
-}
 
-/** Add implicit column type for certain column names. */
-private fun addImplicitColumnTypes(columnHeaders: List<String>) = columnHeaders.map {
-    it + when (it.trim()) {
-        "Score" -> COLUMN_TYPE_DELIMITER + COLUMN_TYPE_TAG_NUMBER
-        "URL" -> COLUMN_TYPE_DELIMITER + COLUMN_TYPE_TAG_HREF
-        else -> ""
-    }
+    fun getWriter(header: String) = writerMap[header.split(COLUMN_TYPE_DELIMITER).first().trim()]
+
 }
 
 /** Column identifiers of those columns that have the matching type tag. */

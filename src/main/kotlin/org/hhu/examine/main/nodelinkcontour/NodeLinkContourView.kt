@@ -144,7 +144,9 @@ class NodeLinkContourView(private val model: MainViewModel) : ScrollPane() {
             if (colormap == null)
                 ""
             else
-                "-fx-border-color: " + colormap(enclosedDataSet.nodes.numberColumns["Score"]?.get(node)).css
+                "-fx-border-color: " + colormap(
+                        enclosedDataSet.nodes.numberColumns[model.nodeColormapColumn ?: ""]?.get(node)
+                ).css
         }, model.nodeColormap()))
 
         // If node has an associated URL, navigate to it.

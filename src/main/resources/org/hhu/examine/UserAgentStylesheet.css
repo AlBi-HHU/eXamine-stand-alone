@@ -376,7 +376,7 @@ is being used to size a border should also be in pixels.
     -fx-background-insets: 0 0 -1 0, 0, 1, 2;
     -fx-background-radius: 3px, 3px, 2px, 1px;
     -fx-padding: 0.333333em 0.666667em 0.333333em 0.666667em; /* 4 8 4 8 */
-    -fx-text-fill: -fx-text-base-color;
+    -fx-text-fill: -base-intensity-low;
     -fx-alignment: CENTER;
     -fx-content-display: LEFT;
 }
@@ -402,7 +402,7 @@ is being used to size a border should also be in pixels.
 .spinner .increment-arrow-button:hover,
 .spinner .decrement-arrow-button:hover,
 .tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button:hover {
-    -fx-color: -fx-hover-base;
+    -fx-color: -base-intensity-lowest;
 }
 .button:armed,
 .toggle-button:armed,
@@ -422,7 +422,7 @@ is being used to size a border should also be in pixels.
 .spinner .increment-arrow-button:pressed,
 .spinner .decrement-arrow-button:pressed,
 .tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button:pressed {
-    -fx-color: -fx-pressed-base;
+    -fx-color: -base-intensity-lowest;
 }
 .button:focused,
 .toggle-button:focused,
@@ -528,7 +528,7 @@ is being used to size a border should also be in pixels.
 .combo-box-base > .arrow-button > .arrow,
 .web-view .form-select-button .arrow,
 .tab-pane > .tab-header-area > .control-buttons-tab > .container > .tab-down-button > .arrow  {
-    -fx-background-color: -fx-mark-highlight-color, -fx-mark-color;
+    -fx-background-color: -base-intensity-low;
     -fx-background-insets: 0 0 -1 0, 0;
     -fx-padding: 0.166667em 0.333333em 0.166667em 0.333333em; /* 2 4 2 4 */
     -fx-shape: "M 0 0 h 7 l -3.5 4 z";
@@ -1535,13 +1535,20 @@ is being used to size a border should also be in pixels.
 .combo-box > .list-cell {
     -fx-background: transparent;
     -fx-background-color: transparent;
-    -fx-text-fill: -fx-text-base-color;
-    -fx-padding: 0.333333em 0.666667em 0.333333em 0.666667em; /* 4 8 4 8 */
+    -fx-text-fill: -base-intensity-low;
+    -fx-padding: 0.333333em 0em 0.333333em 0.3333em; /* 4 8 4 8 */
 }
 .combo-box-base > .arrow-button {
     -fx-background-radius: 0 3 3 0, 0 2 2 0, 0 1 1 0;
-    -fx-padding: 0.5em 0.667em 0.5em 0.833333em; /* 6 8 6 10 */
+    -fx-padding: 0.5em 0.5em 0.5em 0em; /* 6 8 6 10 */
     -fx-background-color: transparent;
+    -fx-color: -base-intensity-low;
+}
+.combo-box:hover > .list-cell {
+    -fx-text-fill: -base-intensity-lowest;
+}
+.combo-box-base:hover > .arrow-button > .arrow {
+    -fx-color: -base-intensity-lowest;
 }
 
 /*******************************************************************************

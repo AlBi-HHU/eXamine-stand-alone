@@ -69,19 +69,22 @@ private fun <R : NetworkRow> loadDataTable(files: Collection<File>, rowFactory: 
             .flatMap { it.toList() }
             .distinct()
             .filterNotNull()
+
     val columnWriters = ColumnWriters(idToIndex.size, columnHeaders)
 
     // Fill table.
     createReaders(files).forEach { reader ->
         val header = reader.readNext()!!
-        val writers = header.map { it?.let(columnWriters.writerMap::get) }
+        val writers = header.map { it?.let(columnWriters::getWriter) }
 
         val idIndex = header.indexOfFirst { it == IDENTIFIER_COLUMN_NAME }
 
         reader.forEach { line ->
             val rowIdentifier = line[idIndex]
             val rowIndex = idToIndex[rowIdentifier]!!
-            line.forEachIndexed { index, cell -> writers[index]!!.writeValue(rowIndex, cell) }
+            line.forEachIndexed { index, cell ->
+                writers[index]!!.writeValue(rowIndex, cell)
+            }
         }
     }
 

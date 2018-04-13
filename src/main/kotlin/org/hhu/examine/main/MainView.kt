@@ -2,6 +2,7 @@ package org.hhu.examine.main
 
 import javafx.geometry.Pos
 import javafx.geometry.Side
+import javafx.scene.control.ComboBox
 import javafx.scene.control.Hyperlink
 import javafx.scene.control.Label
 import javafx.scene.image.Image
@@ -9,6 +10,7 @@ import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import org.hhu.examine.main.annotation.AnnotationLegend
 import org.hhu.examine.main.annotation.AnnotationTabs
+import org.hhu.examine.property.bind
 import org.hhu.examine.visualization.control.ColorBar
 import org.hhu.examine.visualization.export.imageToClipboard
 import org.hhu.examine.visualization.export.imageToFileByDialog
@@ -85,12 +87,16 @@ private class ScoreColorLegend(model: MainViewModel) : HBox() {
     init {
         alignment = Pos.CENTER
 
-        val barLabel = label("Score") {
-            style {
-                padding = box(0.em, 0.5.em, 0.em, 0.em)
-            }
+        style {
+            spacing = 1.em
         }
-        barLabel.visibleProperty().bind(model.nodeColormap().isNotNull)
+
+        val columnSelector: ComboBox<String> = combobox {
+            items.bind(model.activeNetworkProperty(), { it.nodes.numberColumns.columns.keys.sorted() })
+            setOnAction { _ -> model.nodeColormapColumn = selectedItem }
+        }
+        model.nodeColormapColumnProperty().addListener({ _, _, column -> columnSelector.selectionModel.select(column) })
+        columnSelector.selectionModel.select(model.nodeColormapColumn)
 
         val colorBar = ColorBar()
         colorBar.colormapProperty().bind(model.nodeColormap())

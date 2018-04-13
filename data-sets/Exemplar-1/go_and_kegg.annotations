@@ -1,4 +1,4 @@
-Identifier	Category	Score	Symbol	URL
+Identifier	Category	Score : Number	Symbol	URL : Href
 annotation-1	Category A	0.01	annotation 1	about:blank
 annotation-2	Category A	0.02	annotation 2	about:blank
 annotation-3	Category B	0.03	annotation 3	about:blank

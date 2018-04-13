@@ -45,9 +45,12 @@ class MainViewModel : Controller() {
     private val annotationColorModel = AnnotationColors()
     val annotationColors: ObservableMap<NetworkAnnotation, Color> = annotationColorModel.colorMap
 
+    var nodeColormapColumn: String? by property()
+    private val nodeColormap = SimpleObjectProperty<ColormapInterval?>(null)
+
     private val hoveredRow = SimpleObjectProperty<NetworkRow?>()
     private val selectedRow = SimpleObjectProperty<NetworkRow?>()
-    private var highlightedRow: ObservableValue<NetworkRow?> = createObjectBinding(Callable {
+    val highlightedRow: ObservableValue<NetworkRow?> = createObjectBinding(Callable {
         hoveredRow.value ?: selectedRow.value
     }, hoveredRow, selectedRow)
 
@@ -55,15 +58,13 @@ class MainViewModel : Controller() {
     val highlightedLinks: ObservableSet<NetworkLink> = observableSet()
     val highlightedAnnotations: ObservableSet<NetworkAnnotation> = observableSet()
 
-    private val nodeColormap = SimpleObjectProperty<ColormapInterval?>(null)
-
     init {
-        // Derive colormap for node scores.
         nodeColormap.bind(Bindings.createObjectBinding(Callable {
-            val scoreExtrema = dataSet.nodes.numberColumns["Score"]?.extrema(activeNetwork.graph.vertexSet())
+            val scoreExtrema = dataSet.nodes.numberColumns[nodeColormapColumn ?: ""]
+                    ?.extrema(activeNetwork.graph.vertexSet())
             val symmetricScoreExtrema = scoreExtrema?.expandToCenter(0.0)
             symmetricScoreExtrema?.let { ColormapInterval(BlueWhiteRed, it) }
-        }, activeNetworkProperty()))
+        }, activeNetworkProperty(), nodeColormapColumnProperty()))
 
         if (dataSets.isNotEmpty()) activateDataSet(dataSets[0])
 
@@ -106,6 +107,9 @@ class MainViewModel : Controller() {
     /** Set the data set that is being worked on. */
     fun activateDataSet(dataSetFile: File) {
 
+        // Colormap column to preserver.
+        val preservedNodeColormapColumn = nodeColormapColumn
+
         // Annotations to preserve.
         val preservedIdToColor = annotationColorModel.colorMap
                 .mapKeys { (annotation, color) ->
@@ -113,6 +117,7 @@ class MainViewModel : Controller() {
                 }
 
         // Clear all selections, such that transition to new network is consistent.
+        nodeColormapColumn = null
         selectedAnnotations.clear()
         annotationColorModel.clear()
         selectedRow.value = null
@@ -121,6 +126,13 @@ class MainViewModel : Controller() {
         activeNetwork = emptyNetwork()
         dataSet = readDataSet(dataSetFile)
         activeNetwork = dataSet.induceFromAnnotations(dataSet.modules)
+
+        // Restore colormap column.
+        val numberColumns = activeNetwork.nodes.numberColumns.columns.keys
+        nodeColormapColumn = if (numberColumns.contains(preservedNodeColormapColumn))
+            preservedNodeColormapColumn
+        else
+            numberColumns.firstOrNull()
 
         // Restore previously selected annotations where possible for the new network.
         val annotationsToColors = dataSet.annotations.rows
@@ -175,6 +187,8 @@ class MainViewModel : Controller() {
     fun activeNetworkProperty(): ReadOnlyObjectProperty<Network> = getProperty(MainViewModel::activeNetwork)
 
     fun selectedAnnotationsProperty(): ReadOnlyListProperty<NetworkAnnotation> = selectedAnnotations
+
+    fun nodeColormapColumnProperty(): ReadOnlyObjectProperty<String?> = getProperty(MainViewModel::nodeColormapColumn)
 
     fun nodeColormap(): ReadOnlyObjectProperty<ColormapInterval?> = nodeColormap
 
