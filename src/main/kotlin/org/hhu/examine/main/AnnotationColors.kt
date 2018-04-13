@@ -4,7 +4,7 @@ import javafx.collections.FXCollections.observableHashMap
 import javafx.collections.ObservableMap
 import javafx.scene.paint.Color
 import javafx.scene.paint.Color.rgb
-import org.hhu.examine.data.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkAnnotation
 
 /**
  * Assigns colors to annotations and keeps track of a palette of available colors.

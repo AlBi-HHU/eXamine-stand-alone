@@ -1,4 +1,4 @@
-Identifier	Score	Symbol	URL
+Identifier	Score : Number	Symbol	URL : Href
 ENSMUSG00000057003	-0.1750600813	Myh4	http://www.kegg.jp/dbget-bin/www_bget?mmu:17884
 ENSMUSG00000057000	0.1190623754	Nxf3	http://www.kegg.jp/dbget-bin/www_bget?mmu:245610
 ENSMUSG00000002010	-0.3596161793	Idh3g	http://www.kegg.jp/dbget-bin/www_bget?mmu:15929

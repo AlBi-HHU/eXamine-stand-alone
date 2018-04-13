@@ -2,9 +2,10 @@ package org.hhu.examine.main.nodelinkcontour.layout
 
 import javafx.geometry.Point2D
 import javafx.scene.text.Text
-import org.hhu.examine.data.Network
-import org.hhu.examine.data.NetworkAnnotation
-import org.hhu.examine.data.NetworkNode
+import org.hhu.examine.data.model.Network
+import org.hhu.examine.data.model.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkLink
+import org.hhu.examine.data.model.NetworkNode
 import org.hhu.examine.main.nodelinkcontour.layout.dwyer.cola.Descent
 import org.hhu.examine.main.nodelinkcontour.layout.dwyer.vpsc.Constraint
 import org.hhu.examine.main.nodelinkcontour.layout.dwyer.vpsc.Solver
@@ -22,6 +23,7 @@ import java.util.Comparator.comparingInt
 
 class Layout(
         val network: Network,
+        val nodeLabels: Map<NetworkNode, String>,
         selectedAnnotations: List<NetworkAnnotation>,
         oldLayout: Layout?) {
 
@@ -83,8 +85,8 @@ class Layout(
             baseDilations = DoubleArray(vN)
             radii = DoubleArray(vN)
             for (i in 0 until vN) {
-                baseDilations!![i] = 0.5 * labelSpacedDimensions(nodes[i]).y
-                radii!![i] = 0.5 * labelSpacedDimensions(nodes[i]).x
+                baseDilations!![i] = 0.5 * labelSpacedDimensions(nodeLabels[nodes[i]] ?: "").y
+                radii!![i] = 0.5 * labelSpacedDimensions(nodeLabels[nodes[i]] ?: "").x
             }
 
             // Vertex to vertex minimum distance (based on set memberships).
@@ -186,19 +188,19 @@ class Layout(
     fun position(node: RichNode?): Point2D {
         val result: Point2D
 
-        if (richIndex == null) {
-            result = Point2D.ZERO
+        result = if (richIndex == null) {
+            Point2D.ZERO
         } else {
             val i = richIndex!![node]
-            result = if (i == null) Point2D.ZERO else Point2D(P!![0][i], P!![1][i])
+            if (i == null) Point2D.ZERO else Point2D(P!![0][i], P!![1][i])
         }
 
         return result
     }
 
-    fun linkPositions(): Map<DefaultEdge?, Array<Point2D>> {
+    fun linkPositions(): Map<NetworkLink?, Array<Point2D>> {
 
-        val positionMap = HashMap<DefaultEdge?, Array<Point2D>>()
+        val positionMap = HashMap<NetworkLink?, Array<Point2D>>()
 
         for (richEdge in richGraph!!.edgeSet()) {
 
@@ -302,7 +304,7 @@ class Layout(
             val rE = richGraph!!.addEdge(rSN, rTN)
             rE.edge = e
             rE.core = true
-            richGraph!!.setEdgeWeight(rE, D!![index!!.get(rSN.element)!!][index!!.get(rTN.element)!!])
+            richGraph!!.setEdgeWeight(rE, D!![index!![rSN.element]!!][index!![rTN.element]!!])
         }
         // Add all set span edges.
         for (i in sets.indices) {
@@ -328,7 +330,7 @@ class Layout(
         for (e in richGraph!!.edgeSet()) {
             val rSN = richGraph!!.getEdgeSource(e)
             val rTN = richGraph!!.getEdgeTarget(e)
-            e.memberships.addAll(this.nodeMemberships.get(rSN.element)!!)
+            e.memberships.addAll(this.nodeMemberships[rSN.element]!!)
             e.memberships.retainAll(this.nodeMemberships[rTN.element]!!)
         }
 
@@ -344,8 +346,7 @@ class Layout(
             extRichGraph!!.addVertex(rN)
         }
         // Add edges, but include additional dummy node.
-        var j = 0
-        for (e in richGraph!!.edgeSet()) {
+        for ((j, e) in richGraph!!.edgeSet().withIndex()) {
             val rSN = richGraph!!.getEdgeSource(e)
             val rTN = richGraph!!.getEdgeTarget(e)
 
@@ -364,7 +365,6 @@ class Layout(
             extRichGraph!!.setEdgeWeight(sE, hW)
             extRichGraph!!.setEdgeWeight(tE, hW)
 
-            j++
         }
     }
 
@@ -385,13 +385,11 @@ class Layout(
     }
 
     private inner class BoundProjection(private val radii: DoubleArray, private val distances: Array<DoubleArray>) {
-        private val xVariables: Array<Variable?>
-        private val yVariables: Array<Variable?>
+        private val xVariables: Array<Variable?> = arrayOfNulls(radii.size)
+        private val yVariables: Array<Variable?> = arrayOfNulls(radii.size)
 
         init {
 
-            xVariables = arrayOfNulls(radii.size)
-            yVariables = arrayOfNulls(radii.size)
             for (i in radii.indices) {
                 xVariables[i] = Variable(0.0, 1.0, 1.0)
                 yVariables[i] = Variable(0.0, 1.0, 1.0)
@@ -492,11 +490,7 @@ class Layout(
     }
 
     class RichNode(var element: NetworkNode?) {
-        var memberships: MutableList<NetworkAnnotation>
-
-        init {
-            this.memberships = ArrayList()
-        }
+        var memberships: MutableList<NetworkAnnotation> = ArrayList()
 
         override fun hashCode(): Int {
             return if (element == null) super.hashCode() else this.element!!.hashCode()
@@ -509,14 +503,11 @@ class Layout(
     }
 
     class RichEdge : DefaultWeightedEdge() {
-        var edge: DefaultEdge? = null
+        var edge: NetworkLink? = null
         var core: Boolean = false            // Whether edge is part of original graph.
-        var memberships: MutableList<NetworkAnnotation>  // Set memberships.
+        var memberships: MutableList<NetworkAnnotation> = ArrayList()  // Set memberships.
         var subNode: RichNode? = null        // Optional dummy node that divides edge in extended graph.
 
-        init {
-            memberships = ArrayList()
-        }
     }
 
     companion object {
@@ -537,8 +528,8 @@ class Layout(
         private const val SET_EDGE_CONTRACTION = 0.5
 
         // Dimensions of drawn node label.
-        fun labelDimensions(node: NetworkNode, padding: Boolean): Point2D {
-            val text = Text(node.name)
+        fun labelDimensions(label: String, padding: Boolean): Point2D {
+            val text = Text(label)
             // TODO: Switch to actual network node dimensions.
             text.style = "-fx-font-family: Source Sans Pro Regular; -fx-font-size: 1.2em; " +
                     if (padding) "-fx-padding: 0 .5em 0 .5em"
@@ -549,8 +540,8 @@ class Layout(
             return Point2D(bounds.width,bounds.height + NODE_OUTLINE)
         }
 
-        fun labelSpacedDimensions(node: NetworkNode): Point2D {
-            return labelDimensions(node, true).add(NODE_OUTLINE + NODE_SPACE, NODE_OUTLINE + NODE_SPACE)
+        fun labelSpacedDimensions(label: String): Point2D {
+            return labelDimensions(label, true).add(NODE_OUTLINE + NODE_SPACE, NODE_OUTLINE + NODE_SPACE)
         }
     }
 }

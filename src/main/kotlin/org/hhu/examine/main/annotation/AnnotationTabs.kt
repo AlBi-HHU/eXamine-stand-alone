@@ -11,11 +11,9 @@ import javafx.scene.control.*
 import javafx.scene.layout.BorderPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
-import org.hhu.examine.data.NetworkAnnotation
-import org.hhu.examine.data.NetworkAnnotationCategory
+import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.MainViewModel
-import tornadofx.bind
-import java.util.*
+import org.hhu.examine.property.bind
 import java.util.concurrent.Callable
 import java.util.function.Consumer
 
@@ -23,17 +21,15 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
 
     init {
         styleClass.add("annotation-tabs")
-        tabs.bind(model.activeCategories, ::createTab)
+        tabs.bind(model.dataSetProperty(), { it.categories.keys.map(::createTab) })
     }
 
-    private fun createTab(category: NetworkAnnotationCategory): AnnotationTab {
-
-        val tab = AnnotationTab(category)
+    private fun createTab(category: String): AnnotationTab {
+        val tab = AnnotationTab(model, category)
         tab.annotationColorsProperty().set(model.annotationColors)
-        tab.highlightedAnnotationsProperty().bind(model.highlightedAnnotations())
+        tab.highlightedAnnotationsProperty().set(model.highlightedAnnotations)
         tab.onToggleAnnotationProperty().set(Consumer { model.toggleAnnotation(it) })
-        tab.onHighlightAnnotationsProperty().set(Consumer { model.highlightAnnotations(it) })
-
+        tab.onHighlightAnnotationsProperty().set(Consumer { model.hover(it) })
         return tab
     }
 
@@ -42,7 +38,7 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
 
 }
 
-internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
+internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
 
     private val annotationTable: TableView<NetworkAnnotation>
     private val annotationSelectionModel: AnnotationSelectionModel
@@ -54,27 +50,36 @@ internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
     private val scoreColumn = TableColumn<NetworkAnnotation, Double>("Score")
 
     private val onToggleAnnotation = SimpleObjectProperty<Consumer<NetworkAnnotation>>(Consumer { _ -> })
-    private val onHighlightAnnotations = SimpleObjectProperty<Consumer<List<NetworkAnnotation>>>(Consumer { _ -> })
+    private val onHighlightAnnotations = SimpleObjectProperty<Consumer<NetworkAnnotation?>>(Consumer { _ -> })
 
     init {
 
         // Tab.
         isClosable = false
-        text = category.name
+        text = category
 
         // Table.
-        annotationTable = TableView(FXCollections.observableList(category.annotations))
+        val annotations = model.dataSet.categories[category] ?: emptyList()
+        annotationTable = TableView(FXCollections.observableList(annotations))
 
         val content = BorderPane(annotationTable)
         content.styleClass.add("annotation-tab")
         setContent(content)
 
-        nameColumn.text = category.name
+        nameColumn.text = category
 
         // Cell value factories.
         colorColumn.setCellValueFactory { bindColorValue(it) }
-        nameColumn.setCellValueFactory { SimpleStringProperty(it.value.name) }
-        scoreColumn.setCellValueFactory { SimpleObjectProperty(it.value.score) }
+        nameColumn.setCellValueFactory {
+            SimpleStringProperty(
+                    model.dataSet.annotations.stringColumns["Symbol"]?.get(it.value)
+            )
+        }
+        scoreColumn.setCellValueFactory {
+            SimpleObjectProperty(
+                    model.dataSet.annotations.numberColumns["Score"]?.get(it.value)
+            )
+        }
 
         // Cell factories.
 
@@ -104,10 +109,9 @@ internal class AnnotationTab(category: NetworkAnnotationCategory) : Tab() {
 
         val tableRow = TableRow<NetworkAnnotation>()
         tableRow.setOnMouseEntered { _ ->
-            onHighlightAnnotations.get().accept(
-                    if (tableRow.item == null) Collections.emptyList() else Arrays.asList(tableRow.item))
+            onHighlightAnnotations.get().accept(tableRow.item)
         }
-        tableRow.setOnMouseExited { _ -> onHighlightAnnotations.get().accept(Collections.emptyList()) }
+        tableRow.setOnMouseExited { _ -> onHighlightAnnotations.get().accept(null) }
 
         return tableRow
     }

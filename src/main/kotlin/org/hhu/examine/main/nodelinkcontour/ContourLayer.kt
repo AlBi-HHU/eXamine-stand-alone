@@ -13,7 +13,7 @@ import javafx.scene.Node
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
-import org.hhu.examine.data.NetworkAnnotation
+import org.hhu.examine.data.model.NetworkAnnotation
 import org.hhu.examine.main.nodelinkcontour.layout.Contours
 import java.util.concurrent.Callable
 

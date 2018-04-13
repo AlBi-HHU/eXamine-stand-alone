@@ -1,5 +1,5 @@
-Identifier	Score	Symbol	URL
-node-a	0	node a	about:blank
-node-b	2	node b	about:blank
-node-c	-2	node c	about:blank
-node-d	1	node d	about:blank
+Identifier	First Score : Number	Second Score : Number	Symbol	URL : Href
+node-a	0	0	node a	about:blank
+node-b	2	1	node b	about:blank
+node-c	-2	-1	node c	about:blank
+node-d	1	1	node d	about:blank

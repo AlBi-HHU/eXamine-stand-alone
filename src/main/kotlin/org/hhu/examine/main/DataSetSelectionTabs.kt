@@ -8,9 +8,9 @@ import javafx.scene.control.Tab
 import javafx.scene.control.TabPane
 import javafx.scene.layout.Region
 import javafx.scene.layout.StackPane
-import org.hhu.examine.data.DataSet
 import org.hhu.examine.main.nodelinkcontour.NodeLinkContourView
 import tornadofx.bind
+import java.io.File
 import java.util.concurrent.Callable
 
 /**
@@ -20,9 +20,7 @@ import java.util.concurrent.Callable
 class DataSetSelectionTabs(private val model: MainViewModel) : StackPane() {
 
     private val contentPlaceholder = Label(
-            "Please place your data sets in the '" +
-                    MainViewModel.DATA_SET_DIRECTORY +
-                    "' directory and try again.")
+            "Please place your data sets in the '$DATA_SET_DIRECTORY' directory and try again.")
     private val tabPane = TabPane()
     private val loadingLabel = StackPane(Label("Loading network..."))
 
@@ -44,12 +42,12 @@ class DataSetSelectionTabs(private val model: MainViewModel) : StackPane() {
         children.addAll(contentPlaceholder, tabPane)
     }
 
-    private fun createPane(dataSet: DataSet): Tab {
+    private fun createPane(dataSet: File): Tab {
         val pane = Tab(dataSet.name, loadingLabel)
 
         pane.contentProperty().bind(Bindings.createObjectBinding(
                 Callable {
-                    if (model.activeDataSet == dataSet)
+                    if (model.dataSet.name == dataSet.name)
                         NodeLinkContourView(model)
                     else
                         loadingLabel
