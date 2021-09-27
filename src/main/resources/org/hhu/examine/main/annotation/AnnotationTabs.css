@@ -8,12 +8,21 @@
 
 .name-column {
     -fx-min-width:  0;
-    -fx-pref-width: 21em;
+    -fx-pref-width: 20em;
 }
 
 .score-column {
-    -fx-min-width:  6em;
-    -fx-pref-width: 6em;
+    -fx-min-width:  5em;
+    -fx-pref-width: 5em;
+}
+
+.url-column {
+    -fx-min-width: 3em;
+    -fx-pref-width: 3em;
+}
+
+.table-row-cell {
+    -fx-alignment:  center;
 }
 
 .table-row-cell:filled {
