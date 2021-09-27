@@ -13,8 +13,8 @@
     </description>
 
     <properties>
-        <javafx.version>17-ea+8</javafx.version>
-        <kotlin.version>1.2.31</kotlin.version>
+        <javafx.version>17</javafx.version>
+        <kotlin.version>1.5.31</kotlin.version>
     </properties>
 
     <dependencies>

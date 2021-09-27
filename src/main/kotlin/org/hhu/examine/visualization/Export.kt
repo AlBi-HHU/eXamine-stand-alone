@@ -25,7 +25,7 @@ fun regionToImage(contentRegion: Region, padding: Double, vararg legendRegions: 
     val legendImages = legendRegions.map { it.snapshot(parameters, null) }
 
     // Allocate image with encompassing dimensions.
-    val imageWidth = contentImage.width + padding + (legendImages.map(WritableImage::getWidth).max() ?: 0.0)
+    val imageWidth = contentImage.width + padding + (legendImages.map(WritableImage::getWidth).maxOrNull() ?: 0.0)
     val imageHeight = max(
             contentImage.height,
             legendImages.map(WritableImage::getHeight).sum() + max(0, legendImages.size - 1) * padding

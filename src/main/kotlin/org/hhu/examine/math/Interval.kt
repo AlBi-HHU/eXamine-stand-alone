@@ -27,8 +27,8 @@ data class Interval(val start: Double, val end: Double) {
 }
 
 fun extrema(values: Collection<Double>): Interval? {
-    val min = values.filter(Double::isFinite).min()
-    val max = values.filter(Double::isFinite).max()
+    val min = values.filter(Double::isFinite).minOrNull()
+    val max = values.filter(Double::isFinite).maxOrNull()
 
     return if (min != null && max != null && min != max)
         Interval(min, max)

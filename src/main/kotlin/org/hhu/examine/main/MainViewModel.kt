@@ -1,5 +1,9 @@
 package org.hhu.examine.main
 
+import java.awt.Desktop
+import java.io.File
+import java.net.URL
+import java.util.concurrent.Callable
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.Bindings.createObjectBinding
 import javafx.beans.property.ReadOnlyListProperty
@@ -22,18 +26,16 @@ import org.hhu.examine.visualization.color.ColormapInterval
 import tornadofx.Controller
 import tornadofx.getProperty
 import tornadofx.property
-import java.awt.Desktop.isDesktopSupported
-import java.io.File
-import java.util.concurrent.Callable
 
 const val DATA_SET_DIRECTORY = "data-sets"
 
-/** View model of the main UI. Maintains the exploration state of a data set that is being viewed. */
+/**
+ * View model of the main UI. Maintains the exploration state of a data set that is being viewed.
+ */
 class MainViewModel : Controller() {
 
-    val dataSets: ObservableList<File> = unmodifiableObservableList(observableArrayList(
-            listDataSets(DATA_SET_DIRECTORY)
-    ))
+    val dataSets: ObservableList<File> =
+            unmodifiableObservableList(observableArrayList(listDataSets(DATA_SET_DIRECTORY)))
 
     var dataSet: DataSet by property(emptyDataSet())
         private set
@@ -50,21 +52,32 @@ class MainViewModel : Controller() {
 
     private val hoveredRow = SimpleObjectProperty<NetworkRow?>()
     private val selectedRow = SimpleObjectProperty<NetworkRow?>()
-    val highlightedRow: ObservableValue<NetworkRow?> = createObjectBinding(Callable {
-        hoveredRow.value ?: selectedRow.value
-    }, hoveredRow, selectedRow)
+    val highlightedRow: ObservableValue<NetworkRow?> =
+            createObjectBinding(
+                    Callable { hoveredRow.value ?: selectedRow.value },
+                    hoveredRow,
+                    selectedRow
+            )
 
     val highlightedNodes: ObservableSet<NetworkNode> = observableSet()
     val highlightedLinks: ObservableSet<NetworkLink> = observableSet()
     val highlightedAnnotations: ObservableSet<NetworkAnnotation> = observableSet()
 
     init {
-        nodeColormap.bind(Bindings.createObjectBinding(Callable {
-            val scoreExtrema = dataSet.nodes.numberColumns[nodeColormapColumn ?: ""]
-                    ?.extrema(activeNetwork.graph.vertexSet())
-            val symmetricScoreExtrema = scoreExtrema?.expandToCenter(0.0)
-            symmetricScoreExtrema?.let { ColormapInterval(BlueWhiteRed, it) }
-        }, activeNetworkProperty(), nodeColormapColumnProperty()))
+        nodeColormap.bind(
+                Bindings.createObjectBinding(
+                        Callable {
+                            val scoreExtrema =
+                                    dataSet.nodes.numberColumns[nodeColormapColumn ?: ""]?.extrema(
+                                            activeNetwork.graph.vertexSet()
+                                    )
+                            val symmetricScoreExtrema = scoreExtrema?.expandToCenter(0.0)
+                            symmetricScoreExtrema?.let { ColormapInterval(BlueWhiteRed, it) }
+                        },
+                        activeNetworkProperty(),
+                        nodeColormapColumnProperty()
+                )
+        )
 
         if (dataSets.isNotEmpty()) activateDataSet(dataSets[0])
 
@@ -72,28 +85,42 @@ class MainViewModel : Controller() {
         highlightedNodes.bind(highlightedRow, ::extractNodes)
 
         // Highlight all links that contain all highlighted nodes.
-        highlightedLinks.bind(highlightedRow, { row ->
-            if (row is NetworkLink) {
-                setOf(row)
-            } else {
-                val nodes = extractNodes(row)
-                activeNetwork?.links?.filter {
-                    nodes.isNotEmpty() and nodes.contains(it.source) and nodes.contains(it.target)
-                }.rows.toSet()
-            }
-        })
+        highlightedLinks.bind(
+                highlightedRow,
+                { row ->
+                    if (row is NetworkLink) {
+                        setOf(row)
+                    } else {
+                        val nodes = extractNodes(row)
+                        activeNetwork
+                                ?.links
+                                ?.filter {
+                                    nodes.isNotEmpty() and
+                                            nodes.contains(it.source) and
+                                            nodes.contains(it.target)
+                                }
+                                .rows
+                                .toSet()
+                    }
+                }
+        )
 
         // Highlight all annotations that contain all highlighted nodes.
-        highlightedAnnotations.bind(highlightedRow, { row ->
-            if (row is NetworkAnnotation) {
-                setOf(row)
-            } else {
-                val nodes = extractNodes(row)
-                activeNetwork?.annotations?.filter {
-                    nodes.isNotEmpty() and it.nodes.containsAll(nodes)
-                }.rows.toSet()
-            }
-        })
+        highlightedAnnotations.bind(
+                highlightedRow,
+                { row ->
+                    if (row is NetworkAnnotation) {
+                        setOf(row)
+                    } else {
+                        val nodes = extractNodes(row)
+                        activeNetwork
+                                ?.annotations
+                                ?.filter { nodes.isNotEmpty() and it.nodes.containsAll(nodes) }
+                                .rows
+                                .toSet()
+                    }
+                }
+        )
     }
 
     private fun extractNodes(row: NetworkRow?) =
@@ -111,8 +138,8 @@ class MainViewModel : Controller() {
         val preservedNodeColormapColumn = nodeColormapColumn
 
         // Annotations to preserve.
-        val preservedIdToColor = annotationColorModel.colorMap
-                .mapKeys { (annotation, color) ->
+        val preservedIdToColor =
+                annotationColorModel.colorMap.mapKeys { (annotation, color) ->
                     dataSet.annotations.identities[annotation]
                 }
 
@@ -129,18 +156,20 @@ class MainViewModel : Controller() {
 
         // Restore colormap column.
         val numberColumns = activeNetwork.nodes.numberColumns.columns.keys
-        nodeColormapColumn = if (numberColumns.contains(preservedNodeColormapColumn))
-            preservedNodeColormapColumn
-        else
-            numberColumns.firstOrNull()
+        nodeColormapColumn =
+                if (numberColumns.contains(preservedNodeColormapColumn)) preservedNodeColormapColumn
+                else numberColumns.firstOrNull()
 
         // Restore previously selected annotations where possible for the new network.
-        val annotationsToColors = dataSet.annotations.rows
-                .mapNotNull { annotation ->
-                    val id = dataSet.annotations.identities[annotation]
-                    val color = preservedIdToColor[id]
-                    color?.let { Pair(annotation, color) }
-                }.toMap()
+        val annotationsToColors =
+                dataSet.annotations
+                        .rows
+                        .mapNotNull { annotation ->
+                            val id = dataSet.annotations.identities[annotation]
+                            val color = preservedIdToColor[id]
+                            color?.let { Pair(annotation, color) }
+                        }
+                        .toMap()
         selectedAnnotations.setAll(annotationsToColors.keys)
         annotationColorModel.putAllColors(annotationsToColors)
     }
@@ -171,25 +200,30 @@ class MainViewModel : Controller() {
         if (hrefColumn != null) hrefColumn[node]?.let(::openBrowser)
     }
 
-    private fun openBrowser(url: String) {
-        // Try regular show document, fall back to process creation for unix.
-        try {
-            hostServices.showDocument(url)
-        } catch (ex: NoClassDefFoundError) {
-            if (isDesktopSupported()) {
-                ProcessBuilder("x-www-browser", url).start()
-            }
+    fun openBrowser(url: String) {
+        val uri = URL(url).toURI()
+        val osName by lazy(LazyThreadSafetyMode.NONE) {
+            System.getProperty("os.name").lowercase()
+        }
+        val desktop = Desktop.getDesktop()
+
+        when {
+            Desktop.isDesktopSupported() && desktop.isSupported(Desktop.Action.BROWSE) ->
+                    desktop.browse(uri)
+            "mac" in osName -> Runtime.getRuntime().exec("open $uri")
+            "nix" in osName || "nux" in osName -> Runtime.getRuntime().exec("xdg-open $uri")
         }
     }
 
     fun dataSetProperty(): ReadOnlyObjectProperty<DataSet> = getProperty(MainViewModel::dataSet)
 
-    fun activeNetworkProperty(): ReadOnlyObjectProperty<Network> = getProperty(MainViewModel::activeNetwork)
+    fun activeNetworkProperty(): ReadOnlyObjectProperty<Network> =
+            getProperty(MainViewModel::activeNetwork)
 
     fun selectedAnnotationsProperty(): ReadOnlyListProperty<NetworkAnnotation> = selectedAnnotations
 
-    fun nodeColormapColumnProperty(): ReadOnlyObjectProperty<String?> = getProperty(MainViewModel::nodeColormapColumn)
+    fun nodeColormapColumnProperty(): ReadOnlyObjectProperty<String?> =
+            getProperty(MainViewModel::nodeColormapColumn)
 
     fun nodeColormap(): ReadOnlyObjectProperty<ColormapInterval?> = nodeColormap
-
 }
