@@ -38,7 +38,7 @@ class AnnotationTabs(private val model: MainViewModel) : TabPane() {
 
 }
 
-internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
+internal class AnnotationTab(private val model: MainViewModel, category: String) : Tab() {
 
     private val annotationTable: TableView<NetworkAnnotation>
     private val annotationSelectionModel: AnnotationSelectionModel
@@ -48,6 +48,7 @@ internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
     private val colorColumn = TableColumn<NetworkAnnotation, Color?>()
     private val nameColumn = TableColumn<NetworkAnnotation, String>()
     private val scoreColumn = TableColumn<NetworkAnnotation, Double>("Score")
+    private val urlColumn = TableColumn<NetworkAnnotation, String>()
 
     private val onToggleAnnotation = SimpleObjectProperty<Consumer<NetworkAnnotation>>(Consumer { _ -> })
     private val onHighlightAnnotations = SimpleObjectProperty<Consumer<NetworkAnnotation?>>(Consumer { _ -> })
@@ -80,19 +81,26 @@ internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
                     model.dataSet.annotations.numberColumns["Score"]?.get(it.value)
             )
         }
+        urlColumn.setCellValueFactory {
+            SimpleStringProperty(
+                    model.dataSet.annotations.hrefColumns["URL"]?.get(it.value)
+            )
+        }
 
         // Cell factories.
 
         // Row and cell factories.
         annotationTable.setRowFactory(::createRow)
         colorColumn.setCellFactory(::createColorCell)
+        urlColumn.setCellFactory(::createUrlCell)
 
         // Column layout and style.
         colorColumn.styleClass.add("color-column")
         nameColumn.styleClass.add("name-column")
         scoreColumn.styleClass.add("score-column")
+        urlColumn.styleClass.add("url-column")
 
-        annotationTable.columns.setAll(colorColumn, nameColumn, scoreColumn)
+        annotationTable.columns.setAll(colorColumn, nameColumn, scoreColumn, urlColumn)
 
         annotationSelectionModel = AnnotationSelectionModel(annotationTable)
         annotationTable.selectionModel = annotationSelectionModel
@@ -128,6 +136,21 @@ internal class AnnotationTab(model: MainViewModel, category: String) : Tab() {
                     null
                 } else {
                     annotationMarker(optionalColor)
+                }
+            }
+        }
+    }
+
+    private fun createUrlCell(column: TableColumn<NetworkAnnotation, String?>): TableCell<NetworkAnnotation, String?> {
+        return object : TableCell<NetworkAnnotation, String?>() {
+
+            override fun updateItem(optionalUrl: String?, empty: Boolean) {
+                graphic = if (empty || optionalUrl == null || optionalUrl == "about:blank") {
+                    null
+                } else {
+                    val link = Label("\uD83C\uDF10")
+                    link.setOnMouseClicked { model.openBrowser(optionalUrl) }
+                    link
                 }
             }
         }

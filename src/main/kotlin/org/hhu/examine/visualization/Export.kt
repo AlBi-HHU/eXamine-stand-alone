@@ -8,6 +8,7 @@ import javafx.scene.input.Clipboard
 import javafx.scene.input.ClipboardContent
 import javafx.scene.layout.Region
 import javafx.scene.paint.Color
+import javafx.scene.transform.Transform
 import javafx.stage.FileChooser
 import tornadofx.FileChooserMode
 import tornadofx.chooseFile
@@ -17,20 +18,23 @@ import kotlin.math.ceil
 import kotlin.math.max
 
 fun regionToImage(contentRegion: Region, padding: Double, vararg legendRegions: Region): WritableImage {
+    val pixelScale = 2.0
 
     // Snapshot images.
     val parameters = SnapshotParameters()
+    parameters.setTransform(Transform.scale(pixelScale, pixelScale))
     parameters.fill = Color.TRANSPARENT
+    
     val contentImage = contentRegion.snapshot(parameters, null)
     val legendImages = legendRegions.map { it.snapshot(parameters, null) }
 
     // Allocate image with encompassing dimensions.
-    val imageWidth = contentImage.width + padding + (legendImages.map(WritableImage::getWidth).max() ?: 0.0)
+    val imageWidth = contentImage.width + padding + (legendImages.map(WritableImage::getWidth).maxOrNull() ?: 0.0)
     val imageHeight = max(
             contentImage.height,
             legendImages.map(WritableImage::getHeight).sum() + max(0, legendImages.size - 1) * padding
     )
-    val image = WritableImage(ceil(imageWidth).toInt(), ceil(imageHeight).toInt())
+    val image = WritableImage(ceil(pixelScale * imageWidth).toInt(), ceil(pixelScale * imageHeight).toInt())
 
     // Write the images to a joint image.
     image.pixelWriter.setPixels(
