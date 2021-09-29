@@ -18,7 +18,7 @@ import kotlin.math.ceil
 import kotlin.math.max
 
 fun regionToImage(contentRegion: Region, padding: Double, vararg legendRegions: Region): WritableImage {
-    val pixelScale = 2.0
+    val pixelScale = 8.0
 
     // Snapshot images.
     val parameters = SnapshotParameters()
@@ -34,7 +34,7 @@ fun regionToImage(contentRegion: Region, padding: Double, vararg legendRegions: 
             contentImage.height,
             legendImages.map(WritableImage::getHeight).sum() + max(0, legendImages.size - 1) * padding
     )
-    val image = WritableImage(ceil(pixelScale * imageWidth).toInt(), ceil(pixelScale * imageHeight).toInt())
+    val image = WritableImage(ceil(imageWidth).toInt(), ceil(imageHeight).toInt())
 
     // Write the images to a joint image.
     image.pixelWriter.setPixels(
