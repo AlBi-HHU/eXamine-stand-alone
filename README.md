@@ -46,7 +46,7 @@ Compile
 
 Run
 ---
-The above compilation results in a self-executing `eXamine.jar` in the `eXamine-stand-alone` folder. If your OS does not launch eXamine upon opening it directly, try:
+The above compilation results in a `eXamine.jar` in the `eXamine-stand-alone` folder. Run it:
 ```
 java -jar eXamine.jar
 ```
