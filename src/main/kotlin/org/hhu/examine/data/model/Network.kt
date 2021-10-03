@@ -50,6 +50,6 @@ private class SimpleNetwork(
 internal fun networkToGraph(network: Network): UndirectedGraph<NetworkNode, NetworkLink> {
     val graph = Pseudograph<NetworkNode, NetworkLink>(NetworkLink::class.java)
     network.nodes.rows.forEach { graph.addVertex(it) }
-    network.links.rows.forEach { graph.addEdge(it.source, it.target, it) }
+    network.links.rows.forEach { if (!graph.containsEdge(it.source, it.target)) graph.addEdge(it.source, it.target, it) }
     return graph
 }
