@@ -34,9 +34,9 @@ internal class NetworkElementLayer<E, R : Node>(
 
     private fun onHighlightedElementsChange(change: SetChangeListener.Change<out E>) {
         if (change.wasAdded()) {
-            representations[change.elementAdded]!!.styleClass.add(ELEMENT_HIGHLIGHTED_STYLE)
+            representations[change.elementAdded]?.styleClass?.add(ELEMENT_HIGHLIGHTED_STYLE)
         } else if (change.wasRemoved()) {
-            representations[change.elementRemoved]!!.styleClass.remove(ELEMENT_HIGHLIGHTED_STYLE)
+            representations[change.elementRemoved]?.styleClass?.remove(ELEMENT_HIGHLIGHTED_STYLE)
         }
     }
 
