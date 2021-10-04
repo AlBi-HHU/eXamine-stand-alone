@@ -53,7 +53,7 @@ java -jar eXamine.jar
 
 Datasets
 --------
-Datasets are placed in a folder `data-sets` next to `eXamine.jar` and show up as tabs on the left side in eXamine.
+Datasets are placed in a folder `data-sets`, in the current working directory, and show up as tabs on the left side in eXamine.
 Each data set has a folder that contains three types of files in tab-separated format:
 - `*.nodes` lists the nodes of the network, with a unique `Identifier`, a `Symbol` that is displayed on the node, one or multiple scores that are visualized as the node's contour with a divergent colormap, and a `URL` that links to more information when the node is clicked. See [Exemplar-1/proteins.nodes](data-sets/Exemplar-1/proteins.nodes) for an example.
 - `*.links` lists the undirected node-to-node links, as pairs of node identifiers, that form the network. See [Exemplar-1/interactions.links](data-sets/Exemplar-1/interactions.links) for an example.
